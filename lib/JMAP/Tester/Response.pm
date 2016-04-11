@@ -65,6 +65,19 @@ sub sentence {
   return JMAP::Tester::Response::Sentence->new($triple);
 }
 
+sub single_sentence {
+  my ($self) = @_;
+
+  my @triples = @{ $self->_struct };
+  unless (@triples == 1) {
+    Carp::confess(
+      sprint("single_sentence called but there are %i sentences", 0+@triples)
+    );
+  }
+
+  return JMAP::Tester::Response::Sentence->new($triples[0]);
+}
+
 sub paragraph {
   my ($self, $n) = @_;
 
