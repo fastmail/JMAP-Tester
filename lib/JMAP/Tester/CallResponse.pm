@@ -18,7 +18,7 @@ has name      => (is => 'ro', required => 1);
 has arguments => (is => 'ro', required => 1);
 has client_id => (is => 'ro', required => 1);
 
-sub as_set {
+sub as_setfoos {
   require JMAP::Tester::CallResponse::SetFoos;
   return JMAP::Tester::CallResponse::SetFoos->new({
     name      => $_[0]->name,
