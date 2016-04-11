@@ -120,4 +120,13 @@ sub paragraph_by_client_id {
   });
 }
 
+sub as_struct {
+  my ($self) = @_;
+
+  return [
+    map {; JMAP::Tester::Response::Sentence->new($_)->as_struct }
+    @{ $self->_struct }
+  ];
+}
+
 1;
