@@ -27,4 +27,6 @@ sub as_setfoos {
   });
 }
 
+sub as_struct { [ $_[0]->name, $_[0]->arguments ] }
+
 1;
