@@ -23,6 +23,7 @@ has json_typist => (
   is => 'bare',
   handles => {
     apply_json_types => 'apply_types',
+    strip_json_types => 'strip_types',
   },
   default => sub {
     require JSON::Typist;
