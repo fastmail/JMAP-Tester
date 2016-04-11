@@ -1,5 +1,5 @@
 use v5.10.0;
-package JMAP::Tester::CallResponse::SetFoos;
+package JMAP::Tester::Response::Sentence::Set;
 use Moo;
 
 sub BUILDARGS {

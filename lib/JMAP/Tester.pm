@@ -5,7 +5,7 @@ package JMAP::Tester;
 use Moo;
 
 use Encode qw(encode_utf8);
-use JMAP::Tester::RequestResponse;
+use JMAP::Tester::Response;
 
 has json_codec => (
   is => 'bare',
@@ -76,8 +76,8 @@ sub request {
     $self->json_decode( $http_res->decoded_content )
   );
 
-  return JMAP::Tester::RequestResponse->new({
-    response => $data,
+  return JMAP::Tester::Response->new({
+    struct => $data,
   });
 }
 

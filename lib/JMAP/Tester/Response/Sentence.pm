@@ -1,5 +1,5 @@
 use v5.10.0;
-package JMAP::Tester::CallResponse;
+package JMAP::Tester::Response::Sentence;
 use Moo;
 
 sub BUILDARGS {
@@ -18,9 +18,9 @@ has name      => (is => 'ro', required => 1);
 has arguments => (is => 'ro', required => 1);
 has client_id => (is => 'ro', required => 1);
 
-sub as_setfoos {
-  require JMAP::Tester::CallResponse::SetFoos;
-  return JMAP::Tester::CallResponse::SetFoos->new({
+sub as_set {
+  require JMAP::Tester::Response::Sentence::Set;
+  return JMAP::Tester::Response::Sentence::Set->new({
     name      => $_[0]->name,
     arguments => $_[0]->arguments,
     client_id => $_[0]->client_id,
