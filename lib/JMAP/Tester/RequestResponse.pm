@@ -79,6 +79,28 @@ sub call_response_set {
   });
 }
 
+sub n_call_response_sets {
+  my ($self, $n) = @_;
+
+  return unless my @set_indices = @{ $self->_set_indices };
+  if (defined $n and @set_indices != $n) {
+    Carp::confess("expected $n call response sets but got " . @set_indices)
+  }
+
+  my $res = $self->_response;
+
+  my @sets;
+  for my $i_set (@set_indices) {
+    push @sets, JMAP::Tester::CallResponseSet->new({
+      responses => [
+        map {; JMAP::Tester::CallResponse->new($_) } @{$res}[ @$i_set ]
+      ],
+    });
+  }
+
+  return @sets;
+}
+
 sub call_response_set_by_cid {
   my ($self, $cid) = @_;
 
