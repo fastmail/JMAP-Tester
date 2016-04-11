@@ -20,7 +20,7 @@ sub BUILD {
 }
 
 # map names to index sets
-# map CRS indexes to index sets
+# map CRS indices to index sets
 sub _index_setup {
   my ($self) = @_;
 
@@ -29,8 +29,8 @@ sub _index_setup {
   my $prev_cid;
   my $next_set_idx = 0;
 
-  my %cid_indexes;
-  my @set_indexes;
+  my %cid_indices;
+  my @set_indices;
 
   for my $i (0 .. $#$res) {
     my $cid = $res->[$i][2];
@@ -40,21 +40,23 @@ sub _index_setup {
     if (defined $prev_cid && $prev_cid ne $cid) {
       # We're transition from cid1 to cid2. -- rjbs, 2016-04-08
       Carp::confess("client_id <$cid> appears in non-contiguous positions")
-        if $cid_indexes{$cid};
+        if $cid_indices{$cid};
 
       $next_set_idx++;
     }
 
-    push @{ $cid_indexes{$cid} }, $i;
-    push @{ $set_indexes[ $next_set_idx ] }, $i;
+    push @{ $cid_indices{$cid} }, $i;
+    push @{ $set_indices[ $next_set_idx ] }, $i;
+
+    $prev_cid = $cid;
   }
 
-  $self->_cid_indexes(\%cid_indexes);
-  $self->_set_indexes(\@set_indexes);
+  $self->_cid_indices(\%cid_indices);
+  $self->_set_indices(\@set_indices);
 }
 
-has cid_indexes => (accessor => '_cid_indexes');
-has set_indexes => (accessor => '_set_indexes');
+has cid_indices => (is => 'bare', accessor => '_cid_indices');
+has set_indices => (is => 'bare', accessor => '_set_indices');
 
 sub call_response {
   my ($self, $n) = @_;
