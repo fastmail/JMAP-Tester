@@ -49,7 +49,7 @@ sub request {
   my ($self, $calls) = @_;
 
   state $ident = 'a';
-  my @suffixed = map {; [ $_->[0], $_->[1], $ident++ ] } @$calls;
+  my @suffixed = map {; [ $_->[0], $_->[1], $_->[2] // $ident++ ] } @$calls;
 
   my $json = $self->json_encode(\@suffixed);
 
