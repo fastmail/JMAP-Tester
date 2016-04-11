@@ -27,37 +27,42 @@ sub _index_setup {
   my $res = $self->_struct;
 
   my $prev_cid;
-  my $next_set_idx = 0;
+  my $next_para_idx = 0;
 
   my %cid_indices;
-  my @set_indices;
+  my @para_indices;
 
   for my $i (0 .. $#$res) {
     my $cid = $res->[$i][2];
-    Carp::confess("no client_id for response sentence in position $i")
-      unless defined $cid;
+
+    unless (defined $cid) {
+      Carp::cluck("no client_id for response sentence in position $i");
+      next;
+    }
 
     if (defined $prev_cid && $prev_cid ne $cid) {
       # We're transition from cid1 to cid2. -- rjbs, 2016-04-08
-      Carp::confess("client_id <$cid> appears in non-contiguous positions")
+      Carp::cluck("client_id <$cid> appears in non-contiguous positions")
         if $cid_indices{$cid};
 
-      $next_set_idx++;
+      $next_para_idx++;
     }
 
     push @{ $cid_indices{$cid} }, $i;
-    push @{ $set_indices[ $next_set_idx ] }, $i;
+    push @{ $para_indices[ $next_para_idx ] }, $i;
 
     $prev_cid = $cid;
   }
 
   $self->_cid_indices(\%cid_indices);
-  $self->_set_indices(\@set_indices);
+  $self->_para_indices(\@para_indices);
 }
 
-# I should just have cid-to-paragraph and paragraph-to-sentence.
-has cid_indices => (is => 'bare', accessor => '_cid_indices');
-has set_indices => (is => 'bare', accessor => '_set_indices');
+# The reason we don't have cid-to-para and para-to-lines is that in the event
+# that one cid appears in non-contiguous positions, we want to allow it, even
+# though it's garbage.  -- rjbs, 2016-04-11
+has cid_indices  => (is => 'bare', accessor => '_cid_indices');
+has para_indices => (is => 'bare', accessor => '_para_indices');
 
 sub sentence {
   my ($self, $n) = @_;
@@ -81,7 +86,7 @@ sub single_sentence {
 sub paragraph {
   my ($self, $n) = @_;
 
-  return unless my $indices = $self->_set_indices->[$n];
+  return unless my $indices = $self->_para_indices->[$n];
   my @triples = @{ $self->_struct }[ @$indices ];
   return JMAP::Tester::Response::Paragraph->new({
     sentences => [ map {; JMAP::Tester::Response::Sentence->new($_) } @triples ],
@@ -91,15 +96,15 @@ sub paragraph {
 sub assert_n_paragraphs {
   my ($self, $n) = @_;
 
-  return unless my @set_indices = @{ $self->_set_indices };
-  if (defined $n and @set_indices != $n) {
-    Carp::confess("expected $n paragraphs but got " . @set_indices)
+  return unless my @para_indices = @{ $self->_para_indices };
+  if (defined $n and @para_indices != $n) {
+    Carp::confess("expected $n paragraphs but got " . @para_indices)
   }
 
   my $res = $self->_struct;
 
   my @sets;
-  for my $i_set (@set_indices) {
+  for my $i_set (@para_indices) {
     push @sets, JMAP::Tester::Response::Paragraph->new({
       sentences => [
         map {; JMAP::Tester::Response::Sentence->new($_) } @{$res}[ @$i_set ]
