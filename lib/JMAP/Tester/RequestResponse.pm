@@ -4,9 +4,13 @@ package JMAP::Tester::RequestResponse;
 use Moo;
 with 'JMAP::Tester::Role::Result';
 
+use JMAP::Tester::CallResponse;
+use JMAP::Tester::CallResponseSet;
+
 sub is_success { 1 }
 
 has response => (
+  is       => 'bare',
   reader   => '_response',
   required => 1,
 );

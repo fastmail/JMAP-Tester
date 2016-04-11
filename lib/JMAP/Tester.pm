@@ -5,8 +5,10 @@ package JMAP::Tester;
 use Moo;
 
 use Encode qw(encode_utf8);
+use JMAP::Tester::RequestResponse;
 
 has json_codec => (
+  is => 'bare',
   handles => {
     json_encode => 'encode',
     json_decode => 'decode',
@@ -18,6 +20,7 @@ has json_codec => (
 );
 
 has json_typist => (
+  is => 'bare',
   handles => {
     apply_json_types => 'apply_types',
   },
