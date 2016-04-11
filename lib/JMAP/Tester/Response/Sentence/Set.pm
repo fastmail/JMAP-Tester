@@ -29,15 +29,25 @@ sub created_id {
   return $props->{id};
 }
 
+sub created_creation_ids {
+  keys %{ $_[0]->created }
+}
+
 sub created_ids {
   map {; $_->{id} } values %{ $_[0]->created }
 }
 
-sub updated_ids   { @{ $_[0]->{updated} } }
-sub destroyed_ids { @{ $_[0]->{destroyed} } }
+sub updated_ids   { @{ $_[0]{arguments}{updated} } }
+sub destroyed_ids { @{ $_[0]{arguments}{destroyed} } }
 
-sub not_created_ids   { @{ $_[0]->{notCreated} }   }
-sub not_destroyed_ids { @{ $_[0]->{notDestroyed} } }
-sub not_updated_ids   { @{ $_[0]->{notUpdated} }   }
+# Is this the best API to provide?  I dunno, maybe.  Usage will tell us whether
+# it's right. -- rjbs, 2016-04-11
+sub not_created_ids   { keys %{ $_[0]{arguments}{notCreated} }   }
+sub not_destroyed_ids { keys %{ $_[0]{arguments}{notDestroyed} } }
+sub not_updated_ids   { keys %{ $_[0]{arguments}{notUpdated} }   }
+
+sub create_errors     { $_[0]{arguments}{notCreated}   }
+sub destroy_errors    { $_[0]{arguments}{notDestroyed} }
+sub update_errors     { $_[0]{arguments}{notUpdated}   }
 
 1;
