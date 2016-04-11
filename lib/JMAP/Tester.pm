@@ -36,11 +36,12 @@ has jmap_uri => (
   required => 1,
 );
 
-has _ua => (
+has _request_callback => (
   is => 'ro',
   default => sub {
     require LWP::UserAgent;
-    return LWP::UserAgent->new;
+    my $ua = LWP::UserAgent->new;
+    return sub { my $self = shift; $ua->request(@_) }
   },
 );
 
@@ -52,11 +53,16 @@ sub request {
 
   my $json = $self->json_encode(\@suffixed);
 
-  my $http_res = $self->_ua->post(
-    $self->jmap_uri,
-    'Content-Type' => 'application/json',
-    Content => encode_utf8($json),
+  my $post = HTTP::Request->new(
+    POST => $self->jmap_uri,
+    [
+      'Content-Type' => 'application/json',
+    ],
+    encode_utf8($json),
   );
+
+  my $request_cb = $self->_request_callback;
+  my $http_res = $self->$request_cb($post);
 
   unless ($http_res->is_success) {
     return JMAP::Tester::Result::Failure->new({
