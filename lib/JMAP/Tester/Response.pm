@@ -1,6 +1,8 @@
 use v5.10.0;
 
 package JMAP::Tester::Response;
+# ABSTRACT: what you get in reply to a succesful JMAP request
+
 use Moo;
 with 'JMAP::Tester::Role::Result';
 

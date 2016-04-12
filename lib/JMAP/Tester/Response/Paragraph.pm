@@ -1,5 +1,7 @@
 use v5.10.0;
 package JMAP::Tester::Response::Paragraph;
+# ABSTRACT: a group of sentences in a JMAP response
+
 use Moo;
 
 has sentences => (is => 'bare', reader => '_sentences', required => 1);

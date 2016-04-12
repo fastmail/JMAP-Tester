@@ -1,5 +1,7 @@
 use v5.10.0;
 package JMAP::Tester::Response::Sentence;
+# ABSTRACT: a single triple within a JMAP response
+
 use Moo;
 
 sub BUILDARGS {

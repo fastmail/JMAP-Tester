@@ -1,5 +1,7 @@
 use v5.10.0;
 package JMAP::Tester::Response::Sentence::Set;
+# ABSTRACT: the kind of sentence you get in reply to a setFoos call
+
 use Moo;
 
 sub BUILDARGS {

@@ -2,6 +2,8 @@ use v5.10.0;
 use warnings;
 
 package JMAP::Tester;
+# ABSTRACT: a JMAP client made for testing JMAP servers
+
 use Moo;
 
 use Encode qw(encode_utf8);
