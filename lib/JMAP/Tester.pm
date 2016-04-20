@@ -8,6 +8,7 @@ use Moo;
 
 use Encode qw(encode_utf8);
 use JMAP::Tester::Response;
+use JMAP::Tester::Result::Failure;
 
 has json_codec => (
   is => 'bare',
