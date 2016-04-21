@@ -43,6 +43,11 @@ has _request_callback => (
   default => sub {
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new;
+    
+    if ($ENV{IGNORE_INVALID_CERT}) {
+      $ua->ssl_opts(SSL_verify_mode => 0, verify_hostname => 0);
+    }
+    
     return sub { my $self = shift; $ua->request(@_) }
   },
 );
