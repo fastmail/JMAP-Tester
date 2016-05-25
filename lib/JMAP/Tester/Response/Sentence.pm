@@ -29,6 +29,6 @@ sub as_set {
   });
 }
 
-sub as_struct { [ $_[0]->name, $_[0]->arguments ] }
+sub as_struct { [ $_[0]->name, $_[0]->arguments, $_[0]->client_id ] }
 
 1;
