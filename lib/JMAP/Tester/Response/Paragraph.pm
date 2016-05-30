@@ -22,6 +22,10 @@ sub single {
   return $sentences[0];
 }
 
+sub as_pairs {
+  [ map {; $_->as_pair } $_[0]->sentences ]
+}
+
 sub as_struct {
   [ map {; $_->as_struct } $_[0]->sentences ]
 }
