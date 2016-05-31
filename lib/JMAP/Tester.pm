@@ -102,7 +102,21 @@ sub request {
   my ($self, $calls) = @_;
 
   state $ident = 'a';
-  my @suffixed = map {; [ $_->[0], $_->[1], $_->[2] // $ident++ ] } @$calls;
+  my %seen;
+  my @suffixed;
+
+  for my $call (@$calls) {
+    my $copy = [ @$call ];
+    if (defined $copy->[2]) {
+      $seen{$call->[2]}++;
+    } else {
+      my $next;
+      do { $next = $ident++ } until ! $seen{$ident}++;
+      $copy->[2] = $next;
+    }
+
+    push @suffixed, $copy;
+  }
 
   my $json = $self->json_encode(\@suffixed);
 
