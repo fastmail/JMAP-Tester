@@ -65,7 +65,7 @@ This method returns a L<JMAP::Tester::Response::Sentence::Set> object for the
 current sentence.  That's a specialized Sentence for C<setFoos>-style JMAP
 method responses.
 
-=cot
+=cut
 
 sub as_set {
   require JMAP::Tester::Response::Sentence::Set;

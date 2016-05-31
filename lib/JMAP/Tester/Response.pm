@@ -9,6 +9,16 @@ with 'JMAP::Tester::Role::Result';
 use JMAP::Tester::Response::Sentence;
 use JMAP::Tester::Response::Paragraph;
 
+=head1 OVERVIEW
+
+A JMAP::Tester::Response object represents the successful response to a JMAP
+call.  It is a successful L<JMAP::Tester::Result>.
+
+A Response is used mostly to contain the responses to the individual methods
+passed in the request.
+
+=cut
+
 sub is_success { 1 }
 
 has struct => (
@@ -66,11 +76,29 @@ sub _index_setup {
 has cid_indices  => (is => 'bare', accessor => '_cid_indices');
 has para_indices => (is => 'bare', accessor => '_para_indices');
 
+=method sentence
+
+  my $sentence = $response->sentence($n);
+
+This method returns the I<n>th L<Sentence|JMAP::Tester::Response::Sentence> of
+the response.
+
+=cut
+
 sub sentence {
   my ($self, $n) = @_;
   return unless my $triple = $self->_struct->[$n];
   return JMAP::Tester::Response::Sentence->new($triple);
 }
+
+=method single_sentence
+
+  my $sentence = $response->single_sentence;
+
+This method returns the only L<Sentence|JMAP::Tester::Response::Sentence> of
+the response, raising an exception of there's more than one Sentence.
+
+=cut
 
 sub single_sentence {
   my ($self) = @_;
@@ -85,6 +113,15 @@ sub single_sentence {
   return JMAP::Tester::Response::Sentence->new($triples[0]);
 }
 
+=method paragraph
+
+  my $para = $response->paragraph($n);
+
+This method returns the I<n>th L<Paragraph|JMAP::Tester::Response::Paragraph>
+of the response.
+
+=cut
+
 sub paragraph {
   my ($self, $n) = @_;
 
@@ -94,6 +131,15 @@ sub paragraph {
     sentences => [ map {; JMAP::Tester::Response::Sentence->new($_) } @triples ],
   });
 }
+
+=method assert_n_paragraphs
+
+  my ($p1, $p2, ...) = $response->assert_n_paragraphs($n);
+
+This method returns all the paragraphs in the response, as long as there are
+exactly C<$n>.  Otherwise, it throws an exception.
+
+=cut
 
 sub assert_n_paragraphs {
   my ($self, $n) = @_;
@@ -117,6 +163,15 @@ sub assert_n_paragraphs {
   return @sets;
 }
 
+=method paragraph_by_client_id
+
+  my $para = $response->paragraph_by_client_id($cid);
+
+This returns the paragraph for the given client id.  If there is no paragraph
+for that client id, an empty list is returned.
+
+=cut
+
 sub paragraph_by_client_id {
   my ($self, $cid) = @_;
 
@@ -127,20 +182,34 @@ sub paragraph_by_client_id {
   });
 }
 
-sub as_pairs {
-  my ($self) = @_;
+=method as_struct
 
-  return [
-    map {; JMAP::Tester::Response::Sentence->new($_)->as_pair }
-    @{ $self->_struct }
-  ];
-}
+This method returns an arrayref of arrayrefs, holding the data returned by the
+JMAP server.  Some of the JSON data may be in objects provided by
+L<JSON::Typist>, so consider stripping types!
+
+=cut
 
 sub as_struct {
   my ($self) = @_;
 
   return [
     map {; JMAP::Tester::Response::Sentence->new($_)->as_struct }
+    @{ $self->_struct }
+  ];
+}
+
+=method as_pairs
+
+This method does the same thing as C<as_struct>, but omits client ids.
+
+=cut
+
+sub as_pairs {
+  my ($self) = @_;
+
+  return [
+    map {; JMAP::Tester::Response::Sentence->new($_)->as_pair }
     @{ $self->_struct }
   ];
 }
