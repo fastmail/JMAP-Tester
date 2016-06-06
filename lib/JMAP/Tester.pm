@@ -91,6 +91,7 @@ has ua => (
   default => sub {
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new;
+    $ua->cookie_jar({});
 
     if ($ENV{IGNORE_INVALID_CERT}) {
       $ua->ssl_opts(SSL_verify_mode => 0, verify_hostname => 0);
