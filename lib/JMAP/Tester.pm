@@ -10,6 +10,8 @@ use Encode qw(encode_utf8);
 use HTTP::Request;
 use JMAP::Tester::Response;
 use JMAP::Tester::Result::Failure;
+use Safe::Isa;
+use URI;
 
 =head1 OVERVIEW
 
@@ -82,6 +84,14 @@ has json_typist => (
 
 has jmap_uri => (
   is => 'ro',
+  isa => sub {
+    die "provided jmap_uri is not a URI object" unless $_[0]->$_isa('URI');
+  },
+  coerce => sub {
+    return $_[0] if $_[0]->$_isa('URI');
+    die "can't use reference as a URI" if ref $_[0];
+    URI->new($_[0]);
+  },
   required => 1,
 );
 
@@ -148,7 +158,7 @@ sub request {
   my $json = $self->json_encode(\@suffixed);
 
   my $post = HTTP::Request->new(
-    POST => $self->jmap_uri,
+    POST => $self->jmap_uri->as_string,
     [
       'Content-Type' => 'application/json',
     ],
