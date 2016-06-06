@@ -7,6 +7,7 @@ package JMAP::Tester;
 use Moo;
 
 use Encode qw(encode_utf8);
+use HTTP::Request;
 use JMAP::Tester::Response;
 use JMAP::Tester::Result::Failure;
 
@@ -84,8 +85,9 @@ has jmap_uri => (
   required => 1,
 );
 
-has _request_callback => (
-  is => 'ro',
+has ua => (
+  is   => 'ro',
+  lazy => 1,
   default => sub {
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new;
@@ -94,7 +96,7 @@ has _request_callback => (
       $ua->ssl_opts(SSL_verify_mode => 0, verify_hostname => 0);
     }
 
-    return sub { my $self = shift; $ua->request(@_) }
+    return $ua;
   },
 );
 
@@ -152,8 +154,7 @@ sub request {
     encode_utf8($json),
   );
 
-  my $request_cb = $self->_request_callback;
-  my $http_res = $self->$request_cb($post);
+  my $http_res = $self->ua->request($post);
 
   unless ($http_res->is_success) {
     return JMAP::Tester::Result::Failure->new({
