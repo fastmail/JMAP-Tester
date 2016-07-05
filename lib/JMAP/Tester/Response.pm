@@ -94,20 +94,27 @@ sub sentence {
 =method single_sentence
 
   my $sentence = $response->single_sentence;
+  my $sentence = $response->single_sentence($name);
 
 This method returns the only L<Sentence|JMAP::Tester::Response::Sentence> of
-the response, raising an exception of there's more than one Sentence.
+the response, raising an exception of there's more than one Sentence.  If
+C<$name> is given, an exception is raised if the Sentence's name doesn't match
+the given name.
 
 =cut
 
 sub single_sentence {
-  my ($self) = @_;
+  my ($self, $name) = @_;
 
   my @triples = @{ $self->_struct };
   unless (@triples == 1) {
     Carp::confess(
       sprint("single_sentence called but there are %i sentences", 0+@triples)
     );
+  }
+
+  if (defined $name && $triples[0][0] ne $name) {
+    Carp::confess(qq{single sentence has name "$triples[0][0]" not "$name"});
   }
 
   return JMAP::Tester::Response::Sentence->new($triples[0]);
