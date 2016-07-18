@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - $paragraph->sentence($n) added
+        - $res->single_sentence($name) added
 
 0.001     2016-05-31 11:24:33-04:00 America/New_York
         - first release to CPAN, at Alfie's urging
