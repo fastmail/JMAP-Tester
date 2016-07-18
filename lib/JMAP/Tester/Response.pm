@@ -106,18 +106,18 @@ the given name.
 sub single_sentence {
   my ($self, $name) = @_;
 
-  my @triples = @{ $self->_struct };
-  unless (@triples == 1) {
+  my @sentences = @{ $self->_struct };
+  unless (@sentences == 1) {
     Carp::confess(
-      sprint("single_sentence called but there are %i sentences", 0+@triples)
+      sprintf("single_sentence called but there are %i sentences", 0+@sentences)
     );
   }
 
-  if (defined $name && $triples[0][0] ne $name) {
-    Carp::confess(qq{single sentence has name "$triples[0][0]" not "$name"});
+  if (defined $name && $sentences[0][0] ne $name) {
+    Carp::confess(qq{single sentence has name "$sentences[0][0]" not "$name"});
   }
 
-  return JMAP::Tester::Response::Sentence->new($triples[0]);
+  return JMAP::Tester::Response::Sentence->new($sentences[0]);
 }
 
 =method paragraph
