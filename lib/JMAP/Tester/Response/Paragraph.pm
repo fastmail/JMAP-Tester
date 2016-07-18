@@ -32,6 +32,19 @@ in the paragraph.
 
 sub sentences { @{ $_[0]->_sentences } }
 
+=method sentence
+
+  my $sentence = $para->sentence($n);
+
+This method returns the I<n>th sentence of the paragraph.
+
+=cut
+
+sub sentence {
+  # die on out-of-range?
+  $_[0]->_sentences->[$_[1]];
+}
+
 =method single
 
   my $sentence = $para->single;
