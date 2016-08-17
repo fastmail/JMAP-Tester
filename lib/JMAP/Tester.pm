@@ -56,6 +56,12 @@ Perl code on them.  You can do that with:
   my $struct = $response->as_struct;   # gets the complete JSON data
   $jtest->strip_json_types( $struct ); # strips all the JSON::Typist types
 
+Or more simply:
+
+  my $struct = $response->as_stripped_struct;
+
+There is also L<JMAP::Tester::Response/"as_stripped_pairs">.
+
 =cut
 
 has json_codec => (
@@ -71,7 +77,7 @@ has json_codec => (
 );
 
 has json_typist => (
-  is => 'bare',
+  is => 'ro',
   handles => {
     apply_json_types => 'apply_types',
     strip_json_types => 'strip_types',
@@ -197,6 +203,7 @@ sub request {
 
   return JMAP::Tester::Response->new({
     struct => $data,
+    json_typist => $self->json_typist,
   });
 }
 
