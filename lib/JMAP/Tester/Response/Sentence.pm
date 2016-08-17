@@ -25,11 +25,14 @@ method.
 
 sub BUILDARGS {
   my ($self, $args) = @_;
-  if (ref $args && ref $args eq 'ARRAY') {
+
+  if (my $triple = delete $args->{triple}) {
     return {
-      name => $args->[0],
-      arguments => $args->[1],
-      client_id => $args->[2],
+      %$args,
+
+      name      => $triple->[0],
+      arguments => $triple->[1],
+      client_id => $triple->[2],
     };
   }
   return $self->SUPER::BUILDARGS($args);
@@ -39,25 +42,52 @@ has name      => (is => 'ro', required => 1);
 has arguments => (is => 'ro', required => 1);
 has client_id => (is => 'ro', required => 1);
 
+has _json_typist => (
+  is => 'ro',
+  handles => {
+    strip_json_types => 'strip_types',
+  },
+  default => sub {
+    require JSON::Typist;
+    return JSON::Typist->new;
+  },
+);
+
 =method as_struct
 
-This returns the underlying JSON data of the sentence, which may include
+=method as_stripped_struct
+
+C<as_struct> returns the underlying JSON data of the sentence, which may include
 objects used to convey type information for booleans, strings, and numbers.
 
-It returns a three-element arrayref.
+For raw data, use C<as_stripped_struct>.
+
+These return a three-element arrayref.
 
 =cut
 
 sub as_struct { [ $_[0]->name, $_[0]->arguments, $_[0]->client_id ] }
 
+sub as_stripped_struct {
+  $_[0]->strip_json_types($_[0]->as_struct);
+}
+
 =method as_pair
 
-This method returns the same thing as C<as_struct>, but without the
+=method as_stripped_pair
+
+C<as_pair> returns the same thing as C<as_struct>, but without the
 C<client_id>.  That means it returns a two-element arrayref.
+
+C<as_stripped_pair> returns the same minus JSON type information.
 
 =cut
 
 sub as_pair { [ $_[0]->name, $_[0]->arguments ] }
+
+sub as_stripped_pair {
+  $_[0]->strip_json_types($_[0]->as_pair);
+}
 
 =method as_set
 
@@ -70,9 +100,9 @@ method responses.
 sub as_set {
   require JMAP::Tester::Response::Sentence::Set;
   return JMAP::Tester::Response::Sentence::Set->new({
-    name      => $_[0]->name,
-    arguments => $_[0]->arguments,
-    client_id => $_[0]->client_id,
+    name         => $_[0]->name,
+    arguments    => $_[0]->arguments,
+    client_id    => $_[0]->client_id,
   });
 }
 

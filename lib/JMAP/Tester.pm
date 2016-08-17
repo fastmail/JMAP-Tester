@@ -76,7 +76,7 @@ has json_codec => (
   },
 );
 
-has json_typist => (
+has _json_typist => (
   is => 'ro',
   handles => {
     apply_json_types => 'apply_types',
@@ -203,7 +203,7 @@ sub request {
 
   return JMAP::Tester::Response->new({
     struct => $data,
-    json_typist => $self->json_typist,
+    _json_typist => $self->_json_typist,
   });
 }
 

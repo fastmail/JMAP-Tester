@@ -22,6 +22,17 @@ matching client ids.
 
 has sentences => (is => 'bare', reader => '_sentences', required => 1);
 
+has _json_typist => (
+  is => 'ro',
+  handles => {
+    strip_json_types => 'strip_types',
+  },
+  default => sub {
+    require JSON::Typist;
+    return JSON::Typist->new;
+  },
+);
+
 =method sentences
 
 The C<sentences> method returns a list of
@@ -74,8 +85,10 @@ sub single {
 
 =method as_struct
 
-This method returns an arrayref containing the result of calling C<as_struct>
-on each sentence in the paragraph.
+=method as_stripped_struct
+
+C<as_struct> returns an arrayref containing the result of calling C<as_struct>
+on each sentence in the paragraph. C<as_stripped_struct> removes JSON types.
 
 =cut
 
@@ -83,15 +96,23 @@ sub as_struct {
   [ map {; $_->as_struct } $_[0]->sentences ]
 }
 
+sub as_stripped_struct {
+  $_[0]->strip_json_types($_[0]->as_struct);
+}
+
 =method as_pairs
 
-This method returns an arrayref containing the result of calling C<as_pair>
-on each sentence in the paragraph.
+C<as_pairs> returns an arrayref containing the result of calling C<as_pair>
+on each sentence in the paragraph. C<as_stripped_pairs> removes JSON types.
 
 =cut
 
 sub as_pairs {
   [ map {; $_->as_pair } $_[0]->sentences ]
+}
+
+sub as_stripped_pairs {
+  $_[0]->strip_json_types($_[0]->as_pairs);
 }
 
 1;

@@ -27,14 +27,10 @@ has struct => (
   required => 1,
 );
 
-has json_typist => (
-  is => 'bare',
+has _json_typist => (
+  is => 'ro',
   handles => {
     strip_json_types => 'strip_types',
-  },
-  default => sub {
-    require JSON::Typist;
-    return JSON::Typist->new;
   },
 );
 
@@ -99,7 +95,10 @@ the response.
 sub sentence {
   my ($self, $n) = @_;
   return unless my $triple = $self->_struct->[$n];
-  return JMAP::Tester::Response::Sentence->new($triple);
+  return JMAP::Tester::Response::Sentence->new({
+    triple => $triple,
+    _json_typist => $self->_json_typist,
+  });
 }
 
 =method single_sentence
@@ -128,7 +127,10 @@ sub single_sentence {
     Carp::confess(qq{single sentence has name "$sentences[0][0]" not "$name"});
   }
 
-  return JMAP::Tester::Response::Sentence->new($sentences[0]);
+  return JMAP::Tester::Response::Sentence->new({
+    triple       => $sentences[0],
+    _json_typist => $self->_json_typist
+  });
 }
 
 =method paragraph
@@ -146,7 +148,12 @@ sub paragraph {
   return unless my $indices = $self->_para_indices->[$n];
   my @triples = @{ $self->_struct }[ @$indices ];
   return JMAP::Tester::Response::Paragraph->new({
-    sentences => [ map {; JMAP::Tester::Response::Sentence->new($_) } @triples ],
+    sentences => [ map {;
+      JMAP::Tester::Response::Sentence->new({
+        triple => $_,
+        _json_typist => $self->_json_typist
+      }) } @triples ],
+    _json_typist => $self->_json_typist,
   });
 }
 
@@ -173,8 +180,13 @@ sub assert_n_paragraphs {
   for my $i_set (@para_indices) {
     push @sets, JMAP::Tester::Response::Paragraph->new({
       sentences => [
-        map {; JMAP::Tester::Response::Sentence->new($_) } @{$res}[ @$i_set ]
+        map {;
+          JMAP::Tester::Response::Sentence->new({ 
+            triple => $_,
+            _json_typist => $self->_json_typist
+           }) } @{$res}[ @$i_set ]
       ],
+      _json_typist => $self->_json_typist,
     });
   }
 
@@ -196,7 +208,12 @@ sub paragraph_by_client_id {
   return unless my $indices = $self->_cid_indices->{$cid};
   my @triples = @{ $self->_struct }[ @$indices ];
   return JMAP::Tester::Response::Paragraph->new({
-    sentences => [ map {; JMAP::Tester::Response::Sentence->new($_) } @triples ],
+    sentences => [ map {;
+      JMAP::Tester::Response::Sentence->new({
+        triple => $_,
+        _json_typist => $self->_json_typist
+      }) } @triples ],
+    _json_typist => $self->_json_typist,
   });
 }
 
@@ -214,7 +231,7 @@ sub as_struct {
   my ($self) = @_;
 
   return [
-    map {; JMAP::Tester::Response::Sentence->new($_)->as_struct }
+    map {; JMAP::Tester::Response::Sentence->new({triple => $_})->as_struct }
     @{ $self->_struct }
   ];
 }
@@ -238,7 +255,7 @@ sub as_pairs {
   my ($self) = @_;
 
   return [
-    map {; JMAP::Tester::Response::Sentence->new($_)->as_pair }
+    map {; JMAP::Tester::Response::Sentence->new({triple => $_})->as_pair }
     @{ $self->_struct }
   ];
 }
