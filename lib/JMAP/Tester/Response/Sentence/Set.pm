@@ -12,18 +12,6 @@ out the data returned in these kinds of sentences.
 
 =cut
 
-sub BUILDARGS {
-  my ($self, $args) = @_;
-  if (ref $args && ref $args eq 'ARRAY') {
-    return {
-      name => $args->[0],
-      arguments => $args->[1],
-      client_id => $args->[2],
-    };
-  }
-  return $self->SUPER::BUILDARGS($args);
-}
-
 has name      => (is => 'ro', required => 1);
 has arguments => (is => 'ro', required => 1);
 has client_id => (is => 'ro', required => 1);
