@@ -25,11 +25,7 @@ has sentences => (is => 'bare', reader => '_sentences', required => 1);
 has _json_typist => (
   is => 'ro',
   handles => {
-    strip_json_types => 'strip_types',
-  },
-  default => sub {
-    require JSON::Typist;
-    return JSON::Typist->new;
+    _strip_json_types => 'strip_types',
   },
 );
 
@@ -97,7 +93,7 @@ sub as_struct {
 }
 
 sub as_stripped_struct {
-  $_[0]->strip_json_types($_[0]->as_struct);
+  $_[0]->_strip_json_types($_[0]->as_struct);
 }
 
 =method as_pairs
@@ -112,7 +108,7 @@ sub as_pairs {
 }
 
 sub as_stripped_pairs {
-  $_[0]->strip_json_types($_[0]->as_pairs);
+  $_[0]->_strip_json_types($_[0]->as_pairs);
 }
 
 1;

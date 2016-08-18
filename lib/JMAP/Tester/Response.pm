@@ -30,7 +30,7 @@ has struct => (
 has _json_typist => (
   is => 'ro',
   handles => {
-    strip_json_types => 'strip_types',
+    _strip_json_types => 'strip_types',
   },
 );
 
@@ -239,7 +239,7 @@ sub as_struct {
 sub as_stripped_struct {
   my ($self) = @_;
 
-  return $self->strip_json_types($self->as_struct);
+  return $self->_strip_json_types($self->as_struct);
 }
 
 =method as_pairs
@@ -263,7 +263,7 @@ sub as_pairs {
 sub as_stripped_pairs {
   my ($self) = @_;
 
-  return $self->strip_json_types($self->as_pairs);
+  return $self->_strip_json_types($self->as_pairs);
 }
 
 1;

@@ -45,11 +45,7 @@ has client_id => (is => 'ro', required => 1);
 has _json_typist => (
   is => 'ro',
   handles => {
-    strip_json_types => 'strip_types',
-  },
-  default => sub {
-    require JSON::Typist;
-    return JSON::Typist->new;
+    _strip_json_types => 'strip_types',
   },
 );
 
@@ -69,7 +65,7 @@ These return a three-element arrayref.
 sub as_struct { [ $_[0]->name, $_[0]->arguments, $_[0]->client_id ] }
 
 sub as_stripped_struct {
-  $_[0]->strip_json_types($_[0]->as_struct);
+  $_[0]->_strip_json_types($_[0]->as_struct);
 }
 
 =method as_pair
@@ -86,7 +82,7 @@ C<as_stripped_pair> returns the same minus JSON type information.
 sub as_pair { [ $_[0]->name, $_[0]->arguments ] }
 
 sub as_stripped_pair {
-  $_[0]->strip_json_types($_[0]->as_pair);
+  $_[0]->_strip_json_types($_[0]->as_pair);
 }
 
 =method as_set
