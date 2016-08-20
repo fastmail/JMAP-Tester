@@ -61,7 +61,7 @@ This method throws an exception if there is more than one sentence in the
 paragraph.  If a C<$name> argument is given and the paragraph's single
 sentence doesn't have that name, an exception is raised.
 
-Otherwise, this method reeturns the sentence.
+Otherwise, this method returns the sentence.
 
 =cut
 
