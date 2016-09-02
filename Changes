@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - fix a decoding bug for non-ASCII in successful JMAP response handling
+        - http_response is now available on successful responses
 
 0.002     2016-08-22 10:51:35-04:00 America/New_York
         - $paragraph->sentence($n) added
