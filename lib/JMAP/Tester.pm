@@ -72,7 +72,7 @@ has json_codec => (
   },
   default => sub {
     require JSON;
-    return JSON->new->allow_blessed->convert_blessed;
+    return JSON->new->utf8->allow_blessed->convert_blessed;
   },
 );
 
@@ -184,7 +184,7 @@ sub request {
     [
       'Content-Type' => 'application/json',
     ],
-    encode_utf8($json),
+    $json,
   );
 
   my $http_res = $self->ua->request($post);
