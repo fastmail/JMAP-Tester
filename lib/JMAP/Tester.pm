@@ -203,7 +203,8 @@ sub request {
 
   return JMAP::Tester::Response->new({
     struct => $data,
-    _json_typist => $self->_json_typist,
+    _json_typist  => $self->_json_typist,
+    http_response => $http_res,
   });
 }
 

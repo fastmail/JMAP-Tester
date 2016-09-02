@@ -27,6 +27,10 @@ has struct => (
   required => 1,
 );
 
+has http_response => (
+  is       => 'ro',
+);
+
 has _json_typist => (
   is => 'ro',
   handles => {
