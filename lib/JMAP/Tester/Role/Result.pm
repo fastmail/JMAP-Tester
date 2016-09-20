@@ -8,10 +8,15 @@ use Moo::Role;
 =head1 OVERVIEW
 
 This is the role consumed by the class of any object returned by JMAP::Tester's
-C<request> method.  Its only guarantee, for now, is an C<is_success> method.
+C<request> method.  Its only guarantee, for now, is an C<is_success> method,
+and an C<http_response> method.
 
 =cut
 
 requires 'is_success';
+
+has http_response => (
+  is => 'ro',
+);
 
 1;
