@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.004     2016-09-26 14:05:14-04:00 America/New_York
         - include http_response on all request results
 
 0.003     2016-09-02 11:09:48-04:00 America/New_York
