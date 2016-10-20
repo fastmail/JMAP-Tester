@@ -133,6 +133,11 @@ sub _set_cookie {
   );
 }
 
+has default_arguments => (
+  is  => 'rw',
+  default => sub {  {}  },
+);
+
 =method request
 
   my $result = $jtest->request([
@@ -164,6 +169,8 @@ sub request {
   my %seen;
   my @suffixed;
 
+  my %default_args = %{ $self->default_arguments };
+
   for my $call (@$calls) {
     my $copy = [ @$call ];
     if (defined $copy->[2]) {
@@ -173,6 +180,20 @@ sub request {
       do { $next = $ident++ } until ! $seen{$ident}++;
       $copy->[2] = $next;
     }
+
+    my %arg = %default_args;
+    for my $key (keys %{ $copy->[1] }) {
+      if ( ref $copy->[1]{$key}
+        && ref $copy->[1]{$key} eq 'SCALAR'
+        && ! defined ${ $copy->[1]{$key} }
+      ) {
+        delete $arg{$key};
+      } else {
+        $arg{$key} = $copy->[1]{$key};
+      }
+    }
+
+    $copy->[1] = \%arg;
 
     push @suffixed, $copy;
   }
