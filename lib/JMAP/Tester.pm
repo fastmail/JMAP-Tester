@@ -123,7 +123,7 @@ sub _set_cookie {
     1,
     $name,
     $value,
-    $self->jmap_uri->path,
+    '/',
     $self->jmap_uri->host,
     $self->jmap_uri->port,
     0,
