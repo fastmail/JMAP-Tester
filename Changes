@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - default_arguments have been added so you don't need to remember to
+          put an accountId in every single method call
 
 0.004     2016-09-26 14:05:14-04:00 America/New_York
         - include http_response on all request results
