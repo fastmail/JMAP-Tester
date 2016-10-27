@@ -206,15 +206,17 @@ sub request {
       $copy->[2] = $next;
     }
 
-    my %arg = %default_args;
-    for my $key (keys %{ $copy->[1] }) {
-      if ( ref $copy->[1]{$key}
-        && ref $copy->[1]{$key} eq 'SCALAR'
-        && ! defined ${ $copy->[1]{$key} }
+    my %arg = (
+      %default_args,
+      %{ $copy->[1] // {} },
+    );
+
+    for my $key (keys %arg) {
+      if ( ref $arg{$key}
+        && ref $arg{$key} eq 'SCALAR'
+        && ! defined ${ $arg{$key} }
       ) {
         delete $arg{$key};
-      } else {
-        $arg{$key} = $copy->[1]{$key};
       }
     }
 
