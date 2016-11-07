@@ -115,6 +115,19 @@ has download_uri => (
   predicate => 'has_download_uri',
 );
 
+has authentication_uri => (
+  is => 'ro',
+  isa => sub {
+    die "provided authentication_uri is not a URI object" unless $_[0]->$_isa('URI');
+  },
+  coerce => sub {
+    return $_[0] if $_[0]->$_isa('URI');
+    die "can't use reference as a URI" if ref $_[0];
+    URI->new($_[0]);
+  },
+  predicate => 'has_authentication_uri',
+);
+
 has upload_uri => (
   is => 'ro',
   isa => sub {
@@ -320,6 +333,66 @@ sub upload {
       $self->json_decode( $res->decoded_content )
     ),
   });
+}
+
+=method simple_auth
+
+  my $auth_struct = $tester->simple_auth($username, $password);
+
+=cut
+
+sub simple_auth {
+  my ($self, $username, $password) = @_;
+
+  my $start_json = $self->json_encode({
+    username      => $username,
+    clientName    => (ref $self),
+    clientVersion => $self->VERSION // '0',
+    deviceName    => 'JMAP Testing Client',
+  });
+
+  my $start_res = HTTP::Request->new(
+    POST => $self->authentication_uri->as_string,
+    [
+      'Content-Type' => 'application/json',
+    ],
+    $start_json,
+  );
+
+  Carp::confess("unsuccessful response to authentication (part 1)")
+    unless $start_res->code == 200;
+
+  my $start_reply = $self->json_decode( $start_res->decoded_content );
+
+  Carp::confess("can't proceed with password authentication")
+    unless grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} };
+
+  my $next_json = $self->json_encode({
+    loginId => $start_reply->{loginId},
+    type    => 'password',
+    value   => $password,
+  });
+
+  my $next_res = HTTP::Request->new(
+    POST => $self->authentication_uri->as_string,
+    [
+      'Content-Type' => 'application/json',
+    ],
+    $next_json,
+  );
+
+  Carp::confess("unsuccessful response to authentication (part 2)")
+    unless $next_res->code == 201;
+
+  my $auth_struct = $self->json_decode( $next_res->decoded_content );
+
+  $self->{access_token} = $auth_struct->{accessToken};
+
+  $self->ua->default_header(
+    'Authorization' => "Bearer $auth_struct->{accessToken}"
+  );
+
+  return 1;
 }
 
 1;
