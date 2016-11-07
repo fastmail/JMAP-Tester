@@ -344,6 +344,9 @@ sub upload {
 sub simple_auth {
   my ($self, $username, $password) = @_;
 
+  Carp::confess("can't simple_auth: no authentication_uri provided")
+    unless $self->has_authentication_uri;
+
   my $start_json = $self->json_encode({
     username      => $username,
     clientName    => (ref $self),
