@@ -10,6 +10,7 @@ use Encode qw(encode_utf8);
 use HTTP::Request;
 use JMAP::Tester::Response;
 use JMAP::Tester::Result::Failure;
+use JMAP::Tester::Result::Upload;
 use Safe::Isa;
 use URI;
 
@@ -99,6 +100,32 @@ has jmap_uri => (
     URI->new($_[0]);
   },
   required => 1,
+);
+
+has download_uri => (
+  is => 'ro',
+  isa => sub {
+    die "provided download_uri is not a URI object" unless $_[0]->$_isa('URI');
+  },
+  coerce => sub {
+    return $_[0] if $_[0]->$_isa('URI');
+    die "can't use reference as a URI" if ref $_[0];
+    URI->new($_[0]);
+  },
+  predicate => 'has_download_uri',
+);
+
+has upload_uri => (
+  is => 'ro',
+  isa => sub {
+    die "provided upload_uri is not a URI object" unless $_[0]->$_isa('URI');
+  },
+  coerce => sub {
+    return $_[0] if $_[0]->$_isa('URI');
+    die "can't use reference as a URI" if ref $_[0];
+    URI->new($_[0]);
+  },
+  predicate => 'has_upload_uri',
 );
 
 has ua => (
@@ -253,6 +280,40 @@ sub request {
     struct => $data,
     _json_typist  => $self->_json_typist,
     http_response => $http_res,
+  });
+}
+
+=method upload
+
+  my $blobject = $tester->upload($mime_type, $blob, \%arg);
+
+This uploads the given blob.
+
+=cut
+
+sub upload {
+  my ($self, $mime_type, $blob_ref) = @_;
+
+  Carp::confess("can't upload without upload_uri")
+    unless $self->upload_uri;
+
+  my $res = $self->ua->post(
+    $self->upload_uri,
+    Content => $$blob_ref,
+    'Content-Type' => $mime_type,
+  );
+
+  unless ($res->is_success) {
+    return JMAP::Tester::Result::Failure->new({
+      http_response => $res,
+    });
+  }
+
+  return JMAP::Tester::Result::Upload->new({
+    http_response => $res,
+    payload       => $self->apply_json_types(
+      $self->json_decode( $res->decoded_content )
+    ),
   });
 }
 
