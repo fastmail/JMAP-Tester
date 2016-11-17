@@ -9,6 +9,7 @@ use Moo;
 use Encode qw(encode_utf8);
 use HTTP::Request;
 use JMAP::Tester::Response;
+use JMAP::Tester::Result::Auth;
 use JMAP::Tester::Result::Failure;
 use JMAP::Tester::Result::Upload;
 use Safe::Isa;
@@ -113,6 +114,19 @@ has download_uri => (
     URI->new($_[0]);
   },
   predicate => 'has_download_uri',
+);
+
+has authentication_uri => (
+  is => 'ro',
+  isa => sub {
+    die "provided authentication_uri is not a URI object" unless $_[0]->$_isa('URI');
+  },
+  coerce => sub {
+    return $_[0] if $_[0]->$_isa('URI');
+    die "can't use reference as a URI" if ref $_[0];
+    URI->new($_[0]);
+  },
+  predicate => 'has_authentication_uri',
 );
 
 has upload_uri => (
@@ -319,6 +333,86 @@ sub upload {
     payload       => $self->apply_json_types(
       $self->json_decode( $res->decoded_content )
     ),
+  });
+}
+
+=method simple_auth
+
+  my $auth_struct = $tester->simple_auth($username, $password);
+
+=cut
+
+sub simple_auth {
+  my ($self, $username, $password) = @_;
+
+  # This is fatal, not a failure return, because it reflects the user screwing
+  # up, not a possible JMAP-related condition. -- rjbs, 2016-11-17
+  Carp::confess("can't simple_auth: no authentication_uri provided")
+    unless $self->has_authentication_uri;
+
+  my $start_json = $self->json_encode({
+    username      => $username,
+    clientName    => (ref $self),
+    clientVersion => $self->VERSION // '0',
+    deviceName    => 'JMAP Testing Client',
+  });
+
+  my $start_res = HTTP::Request->new(
+    POST => $self->authentication_uri->as_string,
+    [
+      'Content-Type' => 'application/json',
+    ],
+    $start_json,
+  );
+
+  unless ($start_res->code == 200) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => 'failure in auth phase 1',
+      http_response => $next_res,
+    });
+  }
+
+  my $start_reply = $self->json_decode( $start_res->decoded_content );
+
+  unless (grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} }) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => "password is not an authentication method",
+      http_response => $next_res,
+    });
+  }
+
+  my $next_json = $self->json_encode({
+    loginId => $start_reply->{loginId},
+    type    => 'password',
+    value   => $password,
+  });
+
+  my $next_res = HTTP::Request->new(
+    POST => $self->authentication_uri->as_string,
+    [
+      'Content-Type' => 'application/json',
+    ],
+    $next_json,
+  );
+
+  unless ($next_res->code == 201) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => 'failure in auth phase 2',
+      http_response => $next_res,
+    });
+  }
+
+  my $auth_struct = $self->json_decode( $next_res->decoded_content );
+
+  $self->{access_token} = $auth_struct->{accessToken};
+
+  $self->ua->default_header(
+    'Authorization' => "Bearer $auth_struct->{accessToken}"
+  );
+
+  return JMAP::Tester::Result::Auth->new({
+    http_response => $next_res,
+    auth_struct   => $auth_struct,
   });
 }
 
