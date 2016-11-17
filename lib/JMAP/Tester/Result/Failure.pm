@@ -19,4 +19,6 @@ It's got an C<is_success> method.  It returns false.
 
 sub is_success { 0 }
 
+has ident => (is => 'ro', predicate => 'has_ident');
+
 1;
