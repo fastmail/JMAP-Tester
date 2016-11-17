@@ -285,14 +285,19 @@ sub request {
 
 =method upload
 
-  my $blobject = $tester->upload($mime_type, $blob, \%arg);
+  my $result = $tester->upload($mime_type, $blob_ref, \%arg);
 
-This uploads the given blob.
+This uploads the given blob, which should be given as a reference to a string.
+
+The return value will either be a L<failure
+object|JMAP::Tester::Result::Failure> or an L<upload
+result|JMAP::Tester::Result::Upload>.
 
 =cut
 
 sub upload {
   my ($self, $mime_type, $blob_ref) = @_;
+  # TODO: support blob as handle or sub -- rjbs, 2016-11-17
 
   Carp::confess("can't upload without upload_uri")
     unless $self->upload_uri;
