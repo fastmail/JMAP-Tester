@@ -9,6 +9,7 @@ use Moo;
 use Encode qw(encode_utf8);
 use HTTP::Request;
 use JMAP::Tester::Response;
+use JMAP::Tester::Result::Auth;
 use JMAP::Tester::Result::Failure;
 use JMAP::Tester::Result::Upload;
 use Safe::Isa;
@@ -344,6 +345,8 @@ sub upload {
 sub simple_auth {
   my ($self, $username, $password) = @_;
 
+  # This is fatal, not a failure return, because it reflects the user screwing
+  # up, not a possible JMAP-related condition. -- rjbs, 2016-11-17
   Carp::confess("can't simple_auth: no authentication_uri provided")
     unless $self->has_authentication_uri;
 
@@ -362,13 +365,21 @@ sub simple_auth {
     $start_json,
   );
 
-  Carp::confess("unsuccessful response to authentication (part 1)")
-    unless $start_res->code == 200;
+  unless ($start_res->code == 200) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => 'failure in auth phase 1',
+      http_response => $next_res,
+    });
+  }
 
   my $start_reply = $self->json_decode( $start_res->decoded_content );
 
-  Carp::confess("can't proceed with password authentication")
-    unless grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} };
+  unless (grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} }) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => "password is not an authentication method",
+      http_response => $next_res,
+    });
+  }
 
   my $next_json = $self->json_encode({
     loginId => $start_reply->{loginId},
@@ -384,8 +395,12 @@ sub simple_auth {
     $next_json,
   );
 
-  Carp::confess("unsuccessful response to authentication (part 2)")
-    unless $next_res->code == 201;
+  unless ($next_res->code == 201) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => 'failure in auth phase 2',
+      http_response => $next_res,
+    });
+  }
 
   my $auth_struct = $self->json_decode( $next_res->decoded_content );
 
@@ -395,7 +410,10 @@ sub simple_auth {
     'Authorization' => "Bearer $auth_struct->{accessToken}"
   );
 
-  return 1;
+  return JMAP::Tester::Result::Auth->new({
+    http_response => $next_res,
+    auth_struct   => $auth_struct,
+  });
 }
 
 1;
