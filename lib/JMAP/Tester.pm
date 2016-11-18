@@ -90,7 +90,7 @@ has _json_typist => (
   },
 );
 
-for my $type (qw(authentication jmap download upload)) {
+for my $type (qw(api authentication download upload)) {
   has "$type\_uri" => (
     is => 'rw',
     isa => sub {
