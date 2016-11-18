@@ -31,7 +31,7 @@ L<Paragraphs|JMAP::Tester::Response::Paragraph>.
 You use the test client like this:
 
   my $jtest = JMAP::Tester->new({
-    jmap_uri => 'https://jmap.local/account/123',
+    api_uri => 'https://jmap.local/account/123',
   });
 
   my $response = $jtest->request([
@@ -90,57 +90,20 @@ has _json_typist => (
   },
 );
 
-has jmap_uri => (
-  is => 'ro',
-  isa => sub {
-    die "provided jmap_uri is not a URI object" unless $_[0]->$_isa('URI');
-  },
-  coerce => sub {
-    return $_[0] if $_[0]->$_isa('URI');
-    die "can't use reference as a URI" if ref $_[0];
-    URI->new($_[0]);
-  },
-  required => 1,
-);
-
-has download_uri => (
-  is => 'ro',
-  isa => sub {
-    die "provided download_uri is not a URI object" unless $_[0]->$_isa('URI');
-  },
-  coerce => sub {
-    return $_[0] if $_[0]->$_isa('URI');
-    die "can't use reference as a URI" if ref $_[0];
-    URI->new($_[0]);
-  },
-  predicate => 'has_download_uri',
-);
-
-has authentication_uri => (
-  is => 'ro',
-  isa => sub {
-    die "provided authentication_uri is not a URI object" unless $_[0]->$_isa('URI');
-  },
-  coerce => sub {
-    return $_[0] if $_[0]->$_isa('URI');
-    die "can't use reference as a URI" if ref $_[0];
-    URI->new($_[0]);
-  },
-  predicate => 'has_authentication_uri',
-);
-
-has upload_uri => (
-  is => 'ro',
-  isa => sub {
-    die "provided upload_uri is not a URI object" unless $_[0]->$_isa('URI');
-  },
-  coerce => sub {
-    return $_[0] if $_[0]->$_isa('URI');
-    die "can't use reference as a URI" if ref $_[0];
-    URI->new($_[0]);
-  },
-  predicate => 'has_upload_uri',
-);
+for my $type (qw(authentication jmap download upload)) {
+  has "$type\_uri" => (
+    is => 'rw',
+    isa => sub {
+      die "provided $type\_uri is not a URI object" unless $_[0]->$_isa('URI');
+    },
+    coerce => sub {
+      return $_[0] if $_[0]->$_isa('URI');
+      die "can't use reference as a URI" if ref $_[0];
+      URI->new($_[0]);
+    },
+    predicate => "has_$type\_uri",
+  );
+}
 
 has ua => (
   is   => 'ro',
@@ -165,8 +128,8 @@ sub _set_cookie {
     $name,
     $value,
     '/',
-    $self->jmap_uri->host,
-    $self->jmap_uri->port,
+    $self->api_uri->host,
+    $self->api_uri->port,
     0,
     0,
     86400,
@@ -231,6 +194,9 @@ L<JMAP::Tester::Response> objects.
 sub request {
   my ($self, $calls) = @_;
 
+  Carp::confess("can't perform request: no api_uri configured")
+    unless $self->has_api_uri;
+
   state $ident = 'a';
   my %seen;
   my @suffixed;
@@ -269,7 +235,7 @@ sub request {
   my $json = $self->json_encode(\@suffixed);
 
   my $post = HTTP::Request->new(
-    POST => $self->jmap_uri->as_string,
+    POST => $self->api_uri->as_string,
     [
       'Content-Type' => 'application/json',
     ],
@@ -347,7 +313,7 @@ sub simple_auth {
 
   # This is fatal, not a failure return, because it reflects the user screwing
   # up, not a possible JMAP-related condition. -- rjbs, 2016-11-17
-  Carp::confess("can't simple_auth: no authentication_uri provided")
+  Carp::confess("can't simple_auth: no authentication_uri configured")
     unless $self->has_authentication_uri;
 
   my $start_json = $self->json_encode({
@@ -414,6 +380,24 @@ sub simple_auth {
     http_response => $next_res,
     auth_struct   => $auth_struct,
   });
+}
+
+sub update_uris_from_auth {
+  my ($self, $auth) = @_;
+
+  # It's not crazy to think that we'd also try to pull the primary accountId
+  # out of the accounts in the auth struct, but I don't think there's a lot to
+  # gain by doing that yet.  Maybe later we'd use it to set the default
+  # X-JMAP-AccountId or other things, but I think there are too many open
+  # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
+
+  for my $type (qw(api download upload)) {
+    next unless my $uri = $auth->auth_struct->{"${type}Url"};
+    my $setter = "$type\_uri";
+    $self->$setter($uri);
+  }
+
+  return;
 }
 
 1;
