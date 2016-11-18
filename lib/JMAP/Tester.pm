@@ -102,6 +102,7 @@ for my $type (qw(authentication jmap download upload)) {
       URI->new($_[0]);
     },
     predicate => "has_$type\_uri",
+    clearer   => "clear_$type\_uri",
   );
 }
 
@@ -392,9 +393,13 @@ sub update_uris_from_auth {
   # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
 
   for my $type (qw(api download upload)) {
-    next unless my $uri = $auth->auth_struct->{"${type}Url"};
-    my $setter = "$type\_uri";
-    $self->$setter($uri);
+    if (defined (my $uri = $auth->auth_struct->{"${type}Url"})) {
+      my $setter = "$type\_uri";
+      $self->$setter($uri);
+    } else {
+      my $clearer = "clear_$type\_uri";
+      $self->$clearer;
+    }
   }
 
   return;
