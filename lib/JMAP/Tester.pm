@@ -335,7 +335,7 @@ sub simple_auth {
   unless ($start_res->code == 200) {
     return JMAP::Tester::Result::Failure->new({
       ident         => 'failure in auth phase 1',
-      http_response => $next_res,
+      http_response => $start_res,
     });
   }
 
@@ -344,7 +344,7 @@ sub simple_auth {
   unless (grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} }) {
     return JMAP::Tester::Result::Failure->new({
       ident         => "password is not an authentication method",
-      http_response => $next_res,
+      http_response => $start_res,
     });
   }
 
