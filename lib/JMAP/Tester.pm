@@ -377,13 +377,17 @@ sub simple_auth {
     'Authorization' => "Bearer $auth_struct->{accessToken}"
   );
 
-  return JMAP::Tester::Result::Auth->new({
+  my $auth = JMAP::Tester::Result::Auth->new({
     http_response => $next_res,
     auth_struct   => $auth_struct,
   });
+
+  $self->_update_uris_from_auth($auth);
+
+  return $auth;
 }
 
-sub update_uris_from_auth {
+sub _update_uris_from_auth {
   my ($self, $auth) = @_;
 
   # It's not crazy to think that we'd also try to pull the primary accountId
