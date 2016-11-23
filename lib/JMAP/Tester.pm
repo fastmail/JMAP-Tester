@@ -303,6 +303,52 @@ sub upload {
   });
 }
 
+=method download
+
+  my $result = $tester->download(\%arg);
+
+Valid arguments are:
+
+  blobId    - the blob to download (required)
+  accountId - the account for which we're downloading (required)
+  name      - the name we want the server to provide back (default: "download")
+
+
+The return value will either be a L<failure
+object|JMAP::Tester::Result::Failure> or an L<upload
+result|JMAP::Tester::Result::Download>.
+
+=cut
+
+sub download {
+  my ($self, $arg) = @_;
+
+  Carp::confess("can't download without download") unless $self->download_uri;
+
+  for my $name (qw(blobId accountId)) {
+    Carp::confess("missing required parameter $name")
+      unless defined $arg->{$name};
+  }
+
+  my $uri = $self->download_uri;
+  for my $var (qw(blobId accountId name)) {
+    my $value = $arg->{$var} // $var; # only "name" could be undef
+    $uri =~ s/\{$var\}/$arg->{$var}/g;
+  }
+
+  my $res = $self->ua->get($uri);
+
+  unless ($res->is_success) {
+    return JMAP::Tester::Result::Failure->new({
+      http_response => $res,
+    });
+  }
+
+  return JMAP::Tester::Result::Download->new({
+    http_response => $res,
+  });
+}
+
 =method simple_auth
 
   my $auth_struct = $tester->simple_auth($username, $password);
