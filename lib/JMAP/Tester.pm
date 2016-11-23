@@ -10,6 +10,7 @@ use Encode qw(encode_utf8);
 use HTTP::Request;
 use JMAP::Tester::Response;
 use JMAP::Tester::Result::Auth;
+use JMAP::Tester::Result::Download;
 use JMAP::Tester::Result::Failure;
 use JMAP::Tester::Result::Upload;
 use Safe::Isa;
@@ -93,14 +94,6 @@ has _json_typist => (
 for my $type (qw(api authentication download upload)) {
   has "$type\_uri" => (
     is => 'rw',
-    isa => sub {
-      die "provided $type\_uri is not a URI object" unless $_[0]->$_isa('URI');
-    },
-    coerce => sub {
-      return $_[0] if $_[0]->$_isa('URI');
-      die "can't use reference as a URI" if ref $_[0];
-      URI->new($_[0]);
-    },
     predicate => "has_$type\_uri",
     clearer   => "clear_$type\_uri",
   );
@@ -124,13 +117,19 @@ has ua => (
 
 sub _set_cookie {
   my ($self, $name, $value) = @_;
+
+  Carp::confess("can't _set_cookie without api_uri configured")
+    unless $self->has_api_uri;
+
+  my $uri = URI->new($self->api_uri);
+
   $self->ua->cookie_jar->set_cookie(
     1,
     $name,
     $value,
     '/',
-    $self->api_uri->host,
-    $self->api_uri->port,
+    $uri->host,
+    $uri->port,
     0,
     0,
     86400,
@@ -236,7 +235,7 @@ sub request {
   my $json = $self->json_encode(\@suffixed);
 
   my $post = HTTP::Request->new(
-    POST => $self->api_uri->as_string,
+    POST => $self->api_uri,
     [
       'Content-Type' => 'application/json',
     ],
@@ -309,10 +308,12 @@ sub upload {
 
 Valid arguments are:
 
-  blobId    - the blob to download (required)
-  accountId - the account for which we're downloading (required)
+  blobId    - the blob to download (no default)
+  accountId - the account for which we're downloading (no default)
   name      - the name we want the server to provide back (default: "download")
 
+If the download URI template has a C<blobId> or C<accountId> placeholder but no
+argument for that is given to C<download>, an exception will be thrown.
 
 The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
@@ -320,20 +321,22 @@ result|JMAP::Tester::Result::Download>.
 
 =cut
 
+my %DL_DEFAULT = (name => 'download');
+
 sub download {
   my ($self, $arg) = @_;
 
-  Carp::confess("can't download without download") unless $self->download_uri;
+  Carp::confess("can't download without download_uri")
+    unless my $uri = $self->download_uri;
 
-  for my $name (qw(blobId accountId)) {
-    Carp::confess("missing required parameter $name")
-      unless defined $arg->{$name};
-  }
+  for my $param (qw(blobId accountId name)) {
+    next unless $uri =~ /\{$param\}/;
+    my $value = $arg->{ $param } // $DL_DEFAULT{ $param };
 
-  my $uri = $self->download_uri;
-  for my $var (qw(blobId accountId name)) {
-    my $value = $arg->{$var} // $var; # only "name" could be undef
-    $uri =~ s/\{$var\}/$arg->{$var}/g;
+    Carp::confess("missing required template parameter $param")
+      unless defined $value;
+
+    $uri =~ s/\{$param\}/$value/g;
   }
 
   my $res = $self->ua->get($uri);
