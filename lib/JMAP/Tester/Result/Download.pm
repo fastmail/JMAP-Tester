@@ -19,8 +19,8 @@ sub is_success { 1 }
 has bytes_ref => (
   is   => 'ro',
   lazy => 1,
-  default => {
-    my $str = $self->http_response->decoded_content(charset => 'none');
+  default => sub {
+    my $str = $_[0]->http_response->decoded_content(charset => 'none');
     return $str;
   },
 );
