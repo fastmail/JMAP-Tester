@@ -2,6 +2,11 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.006     2016-12-01 10:49:03+11:00 Australia/Melbourne
+        - support for upload and download
+        - jmap_uri is now api_uri
+        - logging in via simple auth now uploads uris when possible
+
 0.005     2016-10-27 19:12:19-04:00 America/New_York
         - default_arguments have been added so you don't need to remember to
           put an accountId in every single method call
