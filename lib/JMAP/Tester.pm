@@ -373,12 +373,13 @@ sub simple_auth {
     deviceName    => 'JMAP Testing Client',
   });
 
-  my $start_res = HTTP::Request->new(
-    POST => $self->authentication_uri->as_string,
+  my $start_res = $self->ua->post(
+    $self->authentication_uri->as_string,
     [
-      'Content-Type' => 'application/json',
+      'Content-Type' => 'application/json; charset=utf-8',
+      'Accept'       => 'application/json',
+      'Content'      => $start_json,
     ],
-    $start_json,
   );
 
   unless ($start_res->code == 200) {
@@ -403,12 +404,13 @@ sub simple_auth {
     value   => $password,
   });
 
-  my $next_res = HTTP::Request->new(
-    POST => $self->authentication_uri->as_string,
+  my $next_res = $self->ua-post(
+    $self->authentication_uri->as_string,
     [
-      'Content-Type' => 'application/json',
+      'Content-Type' => 'application/json; charset=utf-8',
+      'Accept'       => 'application/json',
+      'Content'      => $next_json,
     ],
-    $next_json,
   );
 
   unless ($next_res->code == 201) {
