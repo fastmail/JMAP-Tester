@@ -6,6 +6,7 @@ package JMAP::Tester::Response;
 use Moo;
 with 'JMAP::Tester::Role::Result';
 
+use JMAP::Tester::Abort 'abort';
 use JMAP::Tester::Response::Sentence;
 use JMAP::Tester::Response::Paragraph;
 
@@ -118,13 +119,13 @@ sub single_sentence {
 
   my @sentences = @{ $self->_struct };
   unless (@sentences == 1) {
-    Carp::confess(
+    abort(
       sprintf("single_sentence called but there are %i sentences", 0+@sentences)
     );
   }
 
   if (defined $name && $sentences[0][0] ne $name) {
-    Carp::confess(qq{single sentence has name "$sentences[0][0]" not "$name"});
+    abort(qq{single sentence has name "$sentences[0][0]" not "$name"});
   }
 
   return JMAP::Tester::Response::Sentence->new({
@@ -171,7 +172,7 @@ sub assert_n_paragraphs {
 
   return unless my @para_indices = @{ $self->_para_indices };
   if (defined $n and @para_indices != $n) {
-    Carp::confess("expected $n paragraphs but got " . @para_indices)
+    abort("expected $n paragraphs but got " . @para_indices)
   }
 
   my $res = $self->_struct;
@@ -181,7 +182,7 @@ sub assert_n_paragraphs {
     push @sets, JMAP::Tester::Response::Paragraph->new({
       sentences => [
         map {;
-          JMAP::Tester::Response::Sentence->new({ 
+          JMAP::Tester::Response::Sentence->new({
             triple => $_,
             _json_typist => $self->_json_typist
            }) } @{$res}[ @$i_set ]
