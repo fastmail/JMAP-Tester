@@ -1,6 +1,12 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - improved support for ->download
+        - simple_auth should now, uh, work
+        - some internal exceptions now throw JMAP::Tester::Abort errors,
+          for use with Test::Abortable
+        - "Set" sentences now understand new-style Object values for "updated"
+          and provide transparent access to both new- and old-style updated
 
 0.006     2016-12-01 10:49:03+11:00 Australia/Melbourne
         - support for upload and download
