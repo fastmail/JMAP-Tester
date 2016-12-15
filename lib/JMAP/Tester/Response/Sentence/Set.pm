@@ -99,7 +99,29 @@ sub created_ids {
   map {; $_->{id} } values %{ $_[0]->created }
 }
 
-sub updated_ids   { @{ $_[0]{arguments}{updated} } }
+sub updated_ids   {
+  my ($self) = @_;
+  my $updated = $_[0]{arguments}{updated} // {};
+
+  if (ref $updated eq 'ARRAY') {
+    return @$updated;
+  }
+
+  return keys %$updated;
+}
+
+sub updated {
+  my ($self) = @_;
+
+  my $updated = $_[0]{arguments}{updated} // {};
+
+  if (ref $updated eq 'ARRAY') {
+    return { map {; $_ => undef } @$updated };
+  }
+
+  return $updated;
+}
+
 sub destroyed_ids { @{ $_[0]{arguments}{destroyed} } }
 
 # Is this the best API to provide?  I dunno, maybe.  Usage will tell us whether
