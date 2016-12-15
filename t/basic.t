@@ -35,10 +35,10 @@ subtest "the basic basics" => sub {
   my ($p0, $p1, $p2) = $res->assert_n_paragraphs(3);
 
   is($p0->sentence(0)->name, "atePies",         "p0 s0 name");
-  is($p0->sentence(1)->name, "platesDiscarded", "p0 s0 name");
+  is($p0->sentence(1)->name, "platesDiscarded", "p0 s1 name");
   is($p1->sentence(0)->name, "drankBeer",       "p1 s0 name");
   is($p2->sentence(0)->name, "tookNap",         "p2 s0 name");
-  is($p2->sentence(1)->name, "dreamed",         "p2 s0 name");
+  is($p2->sentence(1)->name, "dreamed",         "p2 s1 name");
 };
 
 subtest "old style updated" => sub {
