@@ -14,6 +14,7 @@ use JMAP::Tester::Result::Auth;
 use JMAP::Tester::Result::Download;
 use JMAP::Tester::Result::Failure;
 use JMAP::Tester::Result::Upload;
+use Module::Runtime ();
 use Safe::Isa;
 use URI;
 
@@ -283,6 +284,13 @@ sub request {
 has _logger => (
   is => 'ro',
   default => sub {
+    if ($ENV{JMAP_TESTER_LOGGER}) {
+      my ($class, $filename) = split /:/, $ENV{JMAP_TESTER_LOGGER};
+      $class = "JMAP::Tester::Logger::$class";
+      Module::Runtime::require_module($class);
+      return $class->new({ writer => $filename });
+    }
+
     JMAP::Tester::Logger::Null->new({ writer => \undef });
   },
 );

@@ -15,10 +15,21 @@ has writer => (
     return $value if _CODELIKE($value);
     if (_HANDLE($value)) { return sub { $value->print($_[0]); }; }
     if (_SCALAR0($value) && ! defined $$value) { return sub {} }
+    if (defined $value && ! ref $value && length $value) {
+      open(my $fh, ">>", $value)
+        || Carp::confess("can't open file $value for writing: $!");
+
+      return sub { $fh->print($_[0]) };
+    }
     return $value;
   },
   required => 1,
 );
+
+sub write {
+  my ($self, $string) = @_;
+  $self->writer->( $string );
+}
 
 requires 'log_jmap_request';
 requires 'log_jmap_response';
