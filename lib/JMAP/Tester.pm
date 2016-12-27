@@ -244,13 +244,13 @@ sub request {
     $json,
   );
 
+  my $http_res = $self->ua->request($post);
+
   $self->_logger->log_jmap_request({
     jmap_array   => \@suffixed,
     json         => $json,
-    http_request => $post,
+    http_request => $http_res->request,
   });
-
-  my $http_res = $self->ua->request($post);
 
   unless ($http_res->is_success) {
     $self->_logger->log_jmap_response({
@@ -320,17 +320,32 @@ sub upload {
     'Content-Type' => $mime_type,
   );
 
+  $self->_logger->log_upload_request({
+    http_request => $res->request,
+  });
+
   unless ($res->is_success) {
+    $self->_logger->log_upload_response({
+      http_response => $res,
+    });
+
     return JMAP::Tester::Result::Failure->new({
       http_response => $res,
     });
   }
 
+  my $json = $res->decoded_content;
+  my $blob = $self->apply_json_types( $self->json_decode( $json ) );
+
+  $self->_logger->log_upload_response({
+    json          => $json,
+    blob_struct   => $blob,
+    http_response => $res,
+  });
+
   return JMAP::Tester::Result::Upload->new({
     http_response => $res,
-    payload       => $self->apply_json_types(
-      $self->json_decode( $res->decoded_content )
-    ),
+    payload       => $blob,
   });
 }
 
@@ -372,6 +387,14 @@ sub download {
   }
 
   my $res = $self->ua->get($uri);
+
+  $self->_logger->log_download_request({
+    http_request => $res->request,
+  });
+
+  $self->_logger->log_download_response({
+    http_response => $res,
+  });
 
   unless ($res->is_success) {
     return JMAP::Tester::Result::Failure->new({

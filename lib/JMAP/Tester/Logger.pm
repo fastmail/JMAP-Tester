@@ -34,4 +34,10 @@ sub write {
 requires 'log_jmap_request';
 requires 'log_jmap_response';
 
+requires 'log_upload_request';
+requires 'log_upload_response';
+
+requires 'log_download_request';
+requires 'log_download_response';
+
 1;
