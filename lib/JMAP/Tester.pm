@@ -8,6 +8,7 @@ use Moo;
 
 use Encode qw(encode_utf8);
 use HTTP::Request;
+use JMAP::Tester::Logger::Null;
 use JMAP::Tester::Response;
 use JMAP::Tester::Result::Auth;
 use JMAP::Tester::Result::Download;
@@ -242,9 +243,19 @@ sub request {
     $json,
   );
 
+  $self->_logger->log_jmap_request({
+    jmap_array   => \@suffixed,
+    json         => $json,
+    http_request => $post,
+  });
+
   my $http_res = $self->ua->request($post);
 
   unless ($http_res->is_success) {
+    $self->_logger->log_jmap_response({
+      http_response => $http_res,
+    });
+
     return JMAP::Tester::Result::Failure->new({
       http_response => $http_res,
     });
@@ -256,12 +267,25 @@ sub request {
     $self->json_decode( $http_res->decoded_content )
   );
 
+  $self->_logger->log_jmap_response({
+    jmap_array    => $data,
+    json          => $http_res->decoded_content,
+    http_response => $http_res,
+  });
+
   return JMAP::Tester::Response->new({
     struct => $data,
     _json_typist  => $self->_json_typist,
     http_response => $http_res,
   });
 }
+
+has _logger => (
+  is => 'ro',
+  default => sub {
+    JMAP::Tester::Logger::Null->new({ writer => \undef });
+  },
+);
 
 =method upload
 
