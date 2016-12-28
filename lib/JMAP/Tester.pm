@@ -105,6 +105,8 @@ has ua => (
   is   => 'ro',
   lazy => 1,
   default => sub {
+    my ($self) = @_;
+
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new;
     $ua->cookie_jar({});
@@ -244,13 +246,17 @@ sub request {
     $json,
   );
 
-  my $http_res = $self->ua->request($post);
-
-  $self->_logger->log_jmap_request({
-    jmap_array   => \@suffixed,
-    json         => $json,
-    http_request => $http_res->request,
+  $self->ua->set_my_handler(request_send => sub {
+    my ($req) = @_;
+    $self->_logger->log_jmap_request({
+      jmap_array   => \@suffixed,
+      json         => $json,
+      http_request => $req,
+    });
+    return;
   });
+
+  my $http_res = $self->ua->request($post);
 
   unless ($http_res->is_success) {
     $self->_logger->log_jmap_response({
@@ -314,15 +320,23 @@ sub upload {
   Carp::confess("can't upload without upload_uri")
     unless $self->upload_uri;
 
-  my $res = $self->ua->post(
-    $self->upload_uri,
-    Content => $$blob_ref,
-    'Content-Type' => $mime_type,
+  my $post = HTTP::Request->new(
+    POST => $self->upload_uri,
+    [
+      'Content-Type' => $mime_type,
+    ],
+    $$blob_ref,
   );
 
-  $self->_logger->log_upload_request({
-    http_request => $res->request,
+  $self->ua->set_my_handler(request_send => sub {
+    my ($req) = @_;
+    $self->_logger->log_upload_request({
+      http_request => $req,
+    });
+    return;
   });
+
+  my $res = $self->ua->request($post);
 
   unless ($res->is_success) {
     $self->_logger->log_upload_response({
@@ -386,11 +400,17 @@ sub download {
     $uri =~ s/\{$param\}/$value/g;
   }
 
-  my $res = $self->ua->get($uri);
+  my $get = HTTP::Request->new(GET => $uri);
 
-  $self->_logger->log_download_request({
-    http_request => $res->request,
+  $self->ua->set_my_handler(request_send => sub {
+    my ($req) = @_;
+    $self->_logger->log_download_request({
+      http_request => $req,
+    });
+    return;
   });
+
+  my $res = $self->ua->get($uri);
 
   $self->_logger->log_download_response({
     http_response => $res,
