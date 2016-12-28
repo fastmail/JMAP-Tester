@@ -19,6 +19,8 @@ has writer => (
       open(my $fh, ">>", $value)
         || Carp::confess("can't open file $value for writing: $!");
 
+      $fh->autoflush(1);
+
       return sub { $fh->print($_[0]) };
     }
     return $value;
