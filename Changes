@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - there's a logging system, which will be documented when more done
         - improved support for ->download
         - simple_auth should now, uh, work
         - some internal exceptions now throw JMAP::Tester::Abort errors,
