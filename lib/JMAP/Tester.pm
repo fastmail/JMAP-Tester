@@ -8,11 +8,13 @@ use Moo;
 
 use Encode qw(encode_utf8);
 use HTTP::Request;
+use JMAP::Tester::Logger::Null;
 use JMAP::Tester::Response;
 use JMAP::Tester::Result::Auth;
 use JMAP::Tester::Result::Download;
 use JMAP::Tester::Result::Failure;
 use JMAP::Tester::Result::Upload;
+use Module::Runtime ();
 use Safe::Isa;
 use URI;
 
@@ -103,6 +105,8 @@ has ua => (
   is   => 'ro',
   lazy => 1,
   default => sub {
+    my ($self) = @_;
+
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new;
     $ua->cookie_jar({});
@@ -242,9 +246,23 @@ sub request {
     $json,
   );
 
+  $self->ua->set_my_handler(request_send => sub {
+    my ($req) = @_;
+    $self->_logger->log_jmap_request({
+      jmap_array   => \@suffixed,
+      json         => $json,
+      http_request => $req,
+    });
+    return;
+  });
+
   my $http_res = $self->ua->request($post);
 
   unless ($http_res->is_success) {
+    $self->_logger->log_jmap_response({
+      http_response => $http_res,
+    });
+
     return JMAP::Tester::Result::Failure->new({
       http_response => $http_res,
     });
@@ -256,12 +274,32 @@ sub request {
     $self->json_decode( $http_res->decoded_content )
   );
 
+  $self->_logger->log_jmap_response({
+    jmap_array    => $data,
+    json          => $http_res->decoded_content,
+    http_response => $http_res,
+  });
+
   return JMAP::Tester::Response->new({
     struct => $data,
     _json_typist  => $self->_json_typist,
     http_response => $http_res,
   });
 }
+
+has _logger => (
+  is => 'ro',
+  default => sub {
+    if ($ENV{JMAP_TESTER_LOGGER}) {
+      my ($class, $filename) = split /:/, $ENV{JMAP_TESTER_LOGGER};
+      $class = "JMAP::Tester::Logger::$class";
+      Module::Runtime::require_module($class);
+      return $class->new({ writer => $filename });
+    }
+
+    JMAP::Tester::Logger::Null->new({ writer => \undef });
+  },
+);
 
 =method upload
 
@@ -282,23 +320,46 @@ sub upload {
   Carp::confess("can't upload without upload_uri")
     unless $self->upload_uri;
 
-  my $res = $self->ua->post(
-    $self->upload_uri,
-    Content => $$blob_ref,
-    'Content-Type' => $mime_type,
+  my $post = HTTP::Request->new(
+    POST => $self->upload_uri,
+    [
+      'Content-Type' => $mime_type,
+    ],
+    $$blob_ref,
   );
 
+  $self->ua->set_my_handler(request_send => sub {
+    my ($req) = @_;
+    $self->_logger->log_upload_request({
+      http_request => $req,
+    });
+    return;
+  });
+
+  my $res = $self->ua->request($post);
+
   unless ($res->is_success) {
+    $self->_logger->log_upload_response({
+      http_response => $res,
+    });
+
     return JMAP::Tester::Result::Failure->new({
       http_response => $res,
     });
   }
 
+  my $json = $res->decoded_content;
+  my $blob = $self->apply_json_types( $self->json_decode( $json ) );
+
+  $self->_logger->log_upload_response({
+    json          => $json,
+    blob_struct   => $blob,
+    http_response => $res,
+  });
+
   return JMAP::Tester::Result::Upload->new({
     http_response => $res,
-    payload       => $self->apply_json_types(
-      $self->json_decode( $res->decoded_content )
-    ),
+    payload       => $blob,
   });
 }
 
@@ -339,7 +400,21 @@ sub download {
     $uri =~ s/\{$param\}/$value/g;
   }
 
+  my $get = HTTP::Request->new(GET => $uri);
+
+  $self->ua->set_my_handler(request_send => sub {
+    my ($req) = @_;
+    $self->_logger->log_download_request({
+      http_request => $req,
+    });
+    return;
+  });
+
   my $res = $self->ua->get($uri);
+
+  $self->_logger->log_download_response({
+    http_response => $res,
+  });
 
   unless ($res->is_success) {
     return JMAP::Tester::Result::Failure->new({
