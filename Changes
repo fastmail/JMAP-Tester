@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.007     2016-12-28 12:21:52-05:00 America/New_York
         - there's a logging system, which will be documented when more done
         - improved support for ->download
         - simple_auth should now, uh, work
