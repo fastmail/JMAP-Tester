@@ -294,7 +294,10 @@ has _logger => (
       my ($class, $filename) = split /:/, $ENV{JMAP_TESTER_LOGGER};
       $class = "JMAP::Tester::Logger::$class";
       Module::Runtime::require_module($class);
-      return $class->new({ writer => $filename });
+
+      return $class->new({
+        writer => $filename // 'jmap-tester-{T}-{PID}.log'
+      });
     }
 
     JMAP::Tester::Logger::Null->new({ writer => \undef });

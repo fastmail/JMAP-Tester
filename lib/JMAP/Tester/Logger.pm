@@ -2,27 +2,29 @@ package JMAP::Tester::Logger;
 
 use Moo::Role;
 
+use JMAP::Tester::LogWriter;
 use Params::Util qw(_CODELIKE _HANDLE _SCALAR0);
 
 has writer => (
   is  => 'ro',
   isa => sub {
     die "no writer provided" unless $_[0];
-    die "writer provided can't be called as code" unless _CODELIKE($_[0]);
+    die "writer provided can't be called as code" unless $_[0]->does('JMAP::Tester::LogWriter');
   },
   coerce   => sub {
     my $value = $_[0];
-    return $value if _CODELIKE($value);
-    if (_HANDLE($value)) { return sub { $value->print($_[0]); }; }
-    if (_SCALAR0($value) && ! defined $$value) { return sub {} }
-    if (defined $value && ! ref $value && length $value) {
-      open(my $fh, ">>", $value)
-        || Carp::confess("can't open file $value for writing: $!");
+    return JMAP::Tester::LogWriter::Code->new({ code => $value })
+      if _CODELIKE($value);
 
-      $fh->autoflush(1);
+    return JMAP::Tester::LogWriter::Handle->new({ handle => $value })
+      if _HANDLE($value);
 
-      return sub { $fh->print($_[0]) };
-    }
+    return JMAP::Tester::LogWriter::Code->new({ code => sub{} })
+      if _SCALAR0($value) && ! defined $$value;
+
+    return JMAP::Tester::LogWriter::Filename->new({ filename_template => $value })
+      if defined $value && ! ref $value && length $value;
+
     return $value;
   },
   required => 1,
@@ -30,7 +32,7 @@ has writer => (
 
 sub write {
   my ($self, $string) = @_;
-  $self->writer->( $string );
+  $self->writer->write( $string );
 }
 
 requires 'log_jmap_request';
