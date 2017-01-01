@@ -2,10 +2,10 @@ use strict;
 use warnings;
 
 use JMAP::Tester::Response;
-use JSON::Typist;
+use JSON::Typist 0.005; # $typist->number
 
 use Test::Deep;
-use Test::Deep::JType;
+use Test::Deep::JType 0.005; # jstr() in both want and have
 use Test::More;
 
 # ATTENTION:  You're really not meant to just create Response objects.  They're
