@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.008     2017-01-01 12:00:12-05:00 America/New_York
         - update minimum required JSON::Typist
 
 0.007     2016-12-28 12:21:52-05:00 America/New_York
