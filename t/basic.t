@@ -72,21 +72,21 @@ subtest "old style updated" => sub {
   }
 };
 
-my $events = Test2::API::intercept(sub {
-  subtest "this will abort" => sub {
-    my $res = JMAP::Tester::Response->new({
-      _json_typist => $typist,
-      struct => [
-        [ atePies => { howMany => jnum(100), tastiestPieId => jstr(123) }, 'a' ],
-      ],
-    });
-
-    my $s = $res->single_sentence('piesEt');
-    pass("okay");
-  };
-});
-
 subtest "aborts" => sub {
+  my $events = Test2::API::intercept(sub {
+    subtest "this will abort" => sub {
+      my $res = JMAP::Tester::Response->new({
+        _json_typist => $typist,
+        struct => [
+          [ atePies => { howMany => jnum(100), tastiestPieId => jstr(123) }, 'a' ],
+        ],
+      });
+
+      my $s = $res->single_sentence('piesEt');
+      pass("okay");
+    };
+  });
+
   my ($subtest) = grep { $_->isa('Test2::Event::Subtest') } @$events;
   my @pass = grep { $_->isa('Test2::Event::Ok') } @{ $subtest->subevents };
   is(@pass, 1, "aborted subtest emits just one ok");
