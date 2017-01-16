@@ -7,6 +7,7 @@ use JSON::Typist 0.005; # $typist->number
 use Test::Deep;
 use Test::Deep::JType 0.005; # jstr() in both want and have
 use Test::More;
+use Test::Abortable 'subtest';
 
 # ATTENTION:  You're really not meant to just create Response objects.  They're
 # supposed to come from Testers.  Doing that in the tests, though, would
@@ -72,6 +73,32 @@ subtest "old style updated" => sub {
 
     is_deeply($s->updated, $want, "can get updated from $kind style updated");
   }
+};
+
+my $events = Test2::API::intercept(sub {
+  subtest "this will abort" => sub {
+    my $res = JMAP::Tester::Response->new({
+      _json_typist => $typist,
+      struct => [
+        [ atePies => { howMany => JNUM(100), tastiestPieId => JSTR(123) }, 'a' ],
+      ],
+    });
+
+    my $s = $res->single_sentence('piesEt');
+    pass("okay");
+  };
+});
+
+subtest "aborts" => sub {
+  my ($subtest) = grep { $_->isa('Test2::Event::Subtest') } @$events;
+  my @pass = grep { $_->isa('Test2::Event::Ok') } @{ $subtest->subevents };
+  is(@pass, 1, "aborted subtest emits just one ok");
+  ok($pass[0]->causes_fail, "and it's a failure");
+  isnt(
+    index($pass[0]->name, 'single sentence has name "atePies" not "piesEt"'),
+    -1,
+    "and it's the abort we expect",
+  );
 };
 
 done_testing;
