@@ -16,20 +16,17 @@ use Test::Abortable 'subtest';
 
 my $typist = JSON::Typist->new;
 
-sub JSTR { $typist->string($_[0]) }
-sub JNUM { $typist->number($_[0]) }
-
 subtest "the basic basics" => sub {
   my $res = JMAP::Tester::Response->new({
     _json_typist => $typist,
     struct => [
-      [ atePies => { howMany => JNUM(100), tastiestPieId => JSTR(123) }, 'a' ],
+      [ atePies => { howMany => jnum(100), tastiestPieId => jstr(123) }, 'a' ],
       [ platesDiscarded => { notDiscarded => [] }, 'a' ],
 
-      [ drankBeer => { abv => JNUM(0.02) }, 'b' ],
+      [ drankBeer => { abv => jnum(0.02) }, 'b' ],
 
-      [ tookNap => { successfulDuration => JNUM(2) }, 'c' ],
-      [ dreamed => { about => JSTR("more pie") }, 'c' ],
+      [ tookNap => { successfulDuration => jnum(2) }, 'c' ],
+      [ dreamed => { about => jstr("more pie") }, 'c' ],
     ],
   });
 
@@ -47,7 +44,7 @@ subtest "old style updated" => sub {
     old => [ 'a', 'b' ],
     new => {
       a => undef,
-      b => { awesomeness => JSTR('high') },
+      b => { awesomeness => jstr('high') },
     },
   );
 
@@ -80,7 +77,7 @@ my $events = Test2::API::intercept(sub {
     my $res = JMAP::Tester::Response->new({
       _json_typist => $typist,
       struct => [
-        [ atePies => { howMany => JNUM(100), tastiestPieId => JSTR(123) }, 'a' ],
+        [ atePies => { howMany => jnum(100), tastiestPieId => jstr(123) }, 'a' ],
       ],
     });
 
