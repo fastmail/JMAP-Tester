@@ -16,6 +16,13 @@ has name      => (is => 'ro', required => 1);
 has arguments => (is => 'ro', required => 1);
 has client_id => (is => 'ro', required => 1);
 
+has _json_typist => (
+  is => 'ro',
+  handles => {
+    _strip_json_types => 'strip_types',
+  },
+);
+
 =method new_state
 
 This returns the C<newState> in the result.

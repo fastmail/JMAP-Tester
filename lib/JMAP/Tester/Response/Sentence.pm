@@ -99,6 +99,7 @@ sub as_set {
     name         => $_[0]->name,
     arguments    => $_[0]->arguments,
     client_id    => $_[0]->client_id,
+    _json_typist => $_[0]->_json_typist,
   });
 }
 
