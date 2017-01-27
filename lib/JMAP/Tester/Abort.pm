@@ -23,9 +23,16 @@ has message => (
   required => 1,
 );
 
+has diagnostics => (
+  is => 'ro',
+);
+
 sub as_test_abort_events {
   return [
-    [ Ok => (pass => 0, name => $_[0]->message) ]
+    [ Ok => (pass => 0, name => $_[0]->message) ],
+    ($_[0]->diagnostics
+      ? (map {; [ Diag => (message => $_) ] } @{ $_[0]->diagnostics })
+      : ()),
   ];
 }
 
