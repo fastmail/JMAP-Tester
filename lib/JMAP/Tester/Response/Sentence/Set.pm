@@ -137,8 +137,8 @@ sub not_created_ids   { keys %{ $_[0]{arguments}{notCreated} }   }
 sub not_updated_ids   { keys %{ $_[0]{arguments}{notUpdated} }   }
 sub not_destroyed_ids { keys %{ $_[0]{arguments}{notDestroyed} } }
 
-sub create_errors     { $_[0]{arguments}{notCreated}   }
-sub update_errors     { $_[0]{arguments}{notUpdated}   }
-sub destroy_errors    { $_[0]{arguments}{notDestroyed} }
+sub create_errors     { $_[0]{arguments}{notCreated}   // {} }
+sub update_errors     { $_[0]{arguments}{notUpdated}   // {} }
+sub destroy_errors    { $_[0]{arguments}{notDestroyed} // {} }
 
 1;
