@@ -4,6 +4,9 @@ package JMAP::Tester::Response::Sentence::Set;
 
 use Moo;
 
+use Data::Dumper ();
+use JMAP::Tester::Abort 'abort';
+
 =head1 OVERVIEW
 
 A "Set" sentence is a kind of L<Sentence|JMAP::Tester::Response::Sentence>
@@ -140,5 +143,37 @@ sub not_destroyed_ids { keys %{ $_[0]{arguments}{notDestroyed} } }
 sub create_errors     { $_[0]{arguments}{notCreated}   // {} }
 sub update_errors     { $_[0]{arguments}{notUpdated}   // {} }
 sub destroy_errors    { $_[0]{arguments}{notDestroyed} // {} }
+
+sub assert_no_errors {
+  my ($self) = @_;
+
+  my @errors;
+  local $Data::Dumper::Terse = 1;
+
+  if (keys %{ $self->create_errors }) {
+    push @errors, "notCreated: " .  Data::Dumper::Dumper(
+      $self->_strip_json_types( $self->create_errors )
+    );
+  }
+
+  if (keys %{ $self->update_errors }) {
+    push @errors, "notUpdated: " .  Data::Dumper::Dumper(
+      $self->_strip_json_types( $self->update_errors )
+    );
+  }
+
+  if (keys %{ $self->destroy_errors }) {
+    push @errors, "notDestroyed: " .  Data::Dumper::Dumper(
+      $self->_strip_json_types( $self->destroy_errors )
+    );
+  }
+
+  return unless @errors;
+
+  abort({
+    message     => "errors found in " . $self->name . " sentence",
+    diagnostics => \@errors,
+  });
+}
 
 1;
