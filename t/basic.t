@@ -72,7 +72,7 @@ subtest "old style updated" => sub {
   }
 };
 
-subtest "aborts" => sub {
+subtest "basic abort" => sub {
   my $events = Test2::API::intercept(sub {
     subtest "this will abort" => sub {
       my $res = JMAP::Tester::Response->new({
@@ -96,6 +96,45 @@ subtest "aborts" => sub {
     -1,
     "and it's the abort we expect",
   );
+};
+
+subtest "set sentence assert_no_errors" => sub {
+  my $events = Test2::API::intercept(sub {
+    subtest "this will abort" => sub {
+      my $res = JMAP::Tester::Response->new({
+        _json_typist => $typist,
+        struct => [
+          [
+            setPieces => {
+              updated    => { foo => undef },
+              notUpdated => { fail => { type => jstr("internalJoke") } },
+              notDestroyed => { tick => { type => jstr("nighInvulnerabile") } },
+            },
+            'a',
+          ]
+        ],
+      });
+
+      my $s = $res->single_sentence('setPieces')->as_set;
+
+      $s->assert_no_errors;
+
+      pass("never reach me");
+    };
+  });
+
+  my ($subtest) = grep { $_->isa('Test2::Event::Subtest') } @$events;
+  my @subevents = @{ $subtest->subevents };
+  my @pass = grep { $_->isa('Test2::Event::Ok') } @subevents;
+  is(@pass, 1, "aborted subtest emits just one ok");
+  ok($pass[0]->causes_fail, "and it's a failure");
+
+  my @diags = sort {; $a->message cmp $b->message }
+              grep {; $_->isa('Test2::Event::Diag') } @subevents;
+
+  is(@diags, 2, "we got two distinct diagnostics");
+  like($diags[0]->message, qr/notDestroyed/, "...one about destroys");
+  like($diags[1]->message, qr/notUpdated/, "...one about destroys");
 };
 
 done_testing;
