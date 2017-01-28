@@ -62,7 +62,7 @@ sub _index_setup {
 
     if (defined $prev_cid && $prev_cid ne $cid) {
       # We're transition from cid1 to cid2. -- rjbs, 2016-04-08
-      Carp::cluck("client_id <$cid> appears in non-contiguous positions")
+      abort("client_id <$cid> appears in non-contiguous positions")
         if $cid_indices{$cid};
 
       $next_para_idx++;

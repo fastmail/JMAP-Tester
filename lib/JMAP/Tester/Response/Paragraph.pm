@@ -4,6 +4,8 @@ package JMAP::Tester::Response::Paragraph;
 
 use Moo;
 
+use JMAP::Tester::Abort 'abort';
+
 =head1 OVERVIEW
 
 These objects represent paragraphs in the JMAP response.  That is, if your
@@ -26,11 +28,11 @@ sub client_id {
 }
 
 sub BUILD {
-  Carp::confess("tried to build 0-sentence paragraph")
+  abort("tried to build 0-sentence paragraph")
     unless @{ $_[0]->_sentences };
 
   my $client_id = $_[0]->_sentences->[0]->client_id;
-  Carp::confess("tried to build paragraph with non-uniform client_ids")
+  abort("tried to build paragraph with non-uniform client_ids")
     if grep {; $_->client_id ne $client_id } @{ $_[0]->_sentences };
 }
 
