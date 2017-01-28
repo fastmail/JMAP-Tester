@@ -20,6 +20,20 @@ matching client ids.
 
 =cut
 
+sub client_id {
+  my ($self) = @_;
+  $self->_sentences->[0]->client_id;
+}
+
+sub BUILD {
+  Carp::confess("tried to build 0-sentence paragraph")
+    unless @{ $_[0]->_sentences };
+
+  my $client_id = $_[0]->_sentences->[0]->client_id;
+  Carp::confess("tried to build paragraph with non-uniform client_ids")
+    if grep {; $_->client_id ne $client_id } @{ $_[0]->_sentences };
+}
+
 has sentences => (is => 'bare', reader => '_sentences', required => 1);
 
 has _json_typist => (
