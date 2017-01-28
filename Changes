@@ -1,6 +1,10 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - Set sentences now have an assert_no_errors method that throws a
+          error-dumping abort if any part of the setFoos method did not succeed
+        - $set->VERB_errors now always returns an empty hashref if there are
+          errors, even if the server returned nothing or null
 
 0.008     2017-01-01 12:00:12-05:00 America/New_York
         - update minimum required JSON::Typist
