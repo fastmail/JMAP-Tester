@@ -8,6 +8,7 @@ use Moo;
 
 use Encode qw(encode_utf8);
 use HTTP::Request;
+use JMAP::Tester::Abort 'abort';
 use JMAP::Tester::Logger::Null;
 use JMAP::Tester::Response;
 use JMAP::Tester::Result::Auth;
@@ -242,6 +243,7 @@ sub request {
     POST => $self->api_uri,
     [
       'Content-Type' => 'application/json',
+      $self->_maybe_auth_header,
     ],
     $json,
   );
@@ -327,6 +329,7 @@ sub upload {
     POST => $self->upload_uri,
     [
       'Content-Type' => $mime_type,
+      $self->_maybe_auth_header,
     ],
     $$blob_ref,
   );
@@ -403,7 +406,10 @@ sub download {
     $uri =~ s/\{$param\}/$value/g;
   }
 
-  my $get = HTTP::Request->new(GET => $uri);
+  my $get = HTTP::Request->new(
+    GET => $uri,
+    $self->_maybe_auth_header,
+  );
 
   $self->ua->set_my_handler(request_send => sub {
     my ($req) = @_;
@@ -413,7 +419,7 @@ sub download {
     return;
   });
 
-  my $res = $self->ua->get($uri);
+  my $res = $self->ua->request($get);
 
   $self->_logger->log_download_response({
     http_response => $res,
@@ -435,6 +441,18 @@ sub download {
   my $auth_struct = $tester->simple_auth($username, $password);
 
 =cut
+
+sub _maybe_auth_header {
+  my ($self) = @_;
+  return ($self->_access_token
+          ? (Authorization => "Bearer " . $self->_access_token)
+          : ());
+}
+
+has _access_token => (
+  is  => 'rw',
+  init_arg => undef,
+);
 
 sub simple_auth {
   my ($self, $username, $password) = @_;
@@ -500,11 +518,10 @@ sub simple_auth {
 
   my $auth_struct = $self->json_decode( $next_res->decoded_content );
 
-  $self->{access_token} = $auth_struct->{accessToken};
+  abort("no accessToken in client session object")
+    unless $auth_struct->{accessToken};
 
-  $self->ua->default_header(
-    'Authorization' => "Bearer $auth_struct->{accessToken}"
-  );
+  $self->_access_token($auth_struct->{accessToken});
 
   my $auth = JMAP::Tester::Result::Auth->new({
     http_response => $next_res,
