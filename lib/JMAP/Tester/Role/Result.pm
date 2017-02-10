@@ -5,6 +5,8 @@ package JMAP::Tester::Role::Result;
 
 use Moo::Role;
 
+use JMAP::Tester::Abort ();
+
 =head1 OVERVIEW
 
 This is the role consumed by the class of any object returned by JMAP::Tester's
@@ -18,5 +20,17 @@ requires 'is_success';
 has http_response => (
   is => 'ro',
 );
+
+sub assert_successful {
+  my ($self) = @_;
+
+  return if $self->is_success;
+
+  my $str = $self->can('has_ident') && $self->has_ident
+          ? $self->ident
+          : "JMAP failure";
+
+  die JMAP::Tester::Abort->new($str);
+}
 
 1;
