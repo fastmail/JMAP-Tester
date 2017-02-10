@@ -121,7 +121,7 @@ has ua => (
 );
 
 sub _set_cookie {
-  my ($self, $name, $value) = @_;
+  my ($self, $name, $value, $arg) = @_;
 
   Carp::confess("can't _set_cookie without api_uri configured")
     unless $self->has_api_uri;
@@ -133,10 +133,10 @@ sub _set_cookie {
     $name,
     $value,
     '/',
-    $uri->host,
+    $arg->{domain} // $uri->host,
     $uri->port,
     0,
-    0,
+    ($uri->port == 443 ? 1 : 0),
     86400,
     0,
   );
