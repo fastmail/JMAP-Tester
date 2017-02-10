@@ -14,6 +14,7 @@ use JMAP::Tester::Response;
 use JMAP::Tester::Result::Auth;
 use JMAP::Tester::Result::Download;
 use JMAP::Tester::Result::Failure;
+use JMAP::Tester::Result::Logout;
 use JMAP::Tester::Result::Upload;
 use Module::Runtime ();
 use Safe::Isa;
@@ -553,6 +554,43 @@ sub _update_uris_from_auth {
   }
 
   return;
+}
+
+=method logout
+
+  $tester->logout;
+
+This method attempts to log out from the server by sending a C<DELETE> request
+to the authentication URI.
+
+=cut
+
+sub logout {
+  my ($self) = @_;
+
+  # This is fatal, not a failure return, because it reflects the user screwing
+  # up, not a possible JMAP-related condition. -- rjbs, 2017-02-10
+  Carp::confess("can't logout: no authentication_uri configured")
+    unless $self->has_authentication_uri;
+
+  my $logout_res = $self->ua->delete(
+    $self->authentication_uri,
+    [
+      'Content-Type' => 'application/json; charset=utf-8',
+      'Accept'       => 'application/json',
+    ],
+  );
+
+  if ($logout_res->code == 204) {
+    return JMAP::Tester::Result::Logout->new({
+      http_response => $logout_res,
+    });
+  }
+
+  return JMAP::Tester::Result::Failure->new({
+    ident => "failed to log out",
+    http_response => $logout_res,
+  });
 }
 
 1;
