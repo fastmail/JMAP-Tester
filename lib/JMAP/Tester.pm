@@ -470,7 +470,7 @@ sub simple_auth {
   });
 
   my $start_res = $self->ua->post(
-    $self->authentication_uri->as_string,
+    $self->authentication_uri,
     [
       'Content-Type' => 'application/json; charset=utf-8',
       'Accept'       => 'application/json',
@@ -501,7 +501,7 @@ sub simple_auth {
   });
 
   my $next_res = $self->ua-post(
-    $self->authentication_uri->as_string,
+    $self->authentication_uri,
     [
       'Content-Type' => 'application/json; charset=utf-8',
       'Accept'       => 'application/json',
