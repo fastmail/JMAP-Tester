@@ -24,7 +24,7 @@ has http_response => (
 sub assert_successful {
   my ($self) = @_;
 
-  return if $self->is_success;
+  return $self if $self->is_success;
 
   my $str = $self->can('has_ident') && $self->has_ident
           ? $self->ident
