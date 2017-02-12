@@ -90,7 +90,7 @@ subtest "the basic basics" => sub {
   is($res->sentence(2)->name, "drankBeer",       "s2 name");
   is($res->sentence(3)->name, "tookNap",         "s3 name");
   is($res->sentence(4)->name, "dreamed",         "s4 name");
-  is($res->sentence(5),       undef,             "s5 does not exist");
+  aborts_ok(sub { $res->sentence(5) },           "s5 does not exist");
 
   my ($p0, $p1, $p2) = $res->assert_n_paragraphs(3);
 
@@ -99,10 +99,10 @@ subtest "the basic basics" => sub {
   is($p1->sentence(0)->name, "drankBeer",       "p1 s0 name");
   is($p2->sentence(0)->name, "tookNap",         "p2 s0 name");
   is($p2->sentence(1)->name, "dreamed",         "p2 s1 name");
-  is($p2->sentence(2),       undef,             "p2 s2 does not exist");
+  aborts_ok(sub { $p2->sentence(2) },           "p2 s2 does not exist");
 
   is($res->paragraph(0)->client_id, 'a',    "p0 cid");
-  is($res->paragraph(3),            undef,  "p3 does not exist");
+  aborts_ok(sub { $res->paragraph(3) },     "p3 does not exist");
 
   my @p2_sentences = $p2->sentences;
   is(@p2_sentences, 2, "p2 sentences");
@@ -256,5 +256,17 @@ subtest "miscellaneous error conditions" => sub {
     ok($ok, "paragraph_by_client_id") or diag $error;
   }
 };
+
+sub aborts_ok {
+  my ($code, $desc) = @_;
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  my $ok = eval { $code->(); 1 };
+  my $error = $@;
+
+  ok(
+    ! $ok && eval { $error->isa('JMAP::Tester::Abort') },
+    "got an abort: $desc",
+  );
+}
 
 done_testing;
