@@ -64,8 +64,9 @@ This method returns the I<n>th sentence of the paragraph.
 =cut
 
 sub sentence {
-  # die on out-of-range?
-  $_[0]->_sentences->[$_[1]];
+  my ($self, $n) = @_;
+  abort("there is no sentence for index $n")
+    unless $self->_sentences->[$n];
 }
 
 =method single

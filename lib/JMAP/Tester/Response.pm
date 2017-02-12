@@ -95,7 +95,10 @@ the response.
 
 sub sentence {
   my ($self, $n) = @_;
-  return unless my $triple = $self->_struct->[$n];
+
+  abort("there is no sentence for index $n")
+    unless my $triple = $self->_struct->[$n];
+
   return JMAP::Tester::Response::Sentence->new({
     triple => $triple,
     _json_typist => $self->_json_typist,
@@ -146,7 +149,9 @@ of the response.
 sub paragraph {
   my ($self, $n) = @_;
 
-  return unless my $indices = $self->_para_indices->[$n];
+  abort("there is no paragraph for index $n")
+    unless my $indices = $self->_para_indices->[$n];
+
   my @triples = @{ $self->_struct }[ @$indices ];
   return JMAP::Tester::Response::Paragraph->new({
     sentences => [ map {;
@@ -170,8 +175,10 @@ exactly C<$n>.  Otherwise, it throws an exception.
 sub assert_n_paragraphs {
   my ($self, $n) = @_;
 
-  return unless my @para_indices = @{ $self->_para_indices };
-  if (defined $n and @para_indices != $n) {
+  Carp::confess("no paragraph count given") unless defined $n;
+
+  my @para_indices = @{ $self->_para_indices };
+  if ($n and @para_indices != $n) {
     abort("expected $n paragraphs but got " . @para_indices)
   }
 
@@ -206,7 +213,11 @@ for that client id, an empty list is returned.
 sub paragraph_by_client_id {
   my ($self, $cid) = @_;
 
-  return unless my $indices = $self->_cid_indices->{$cid};
+  Carp::confess("no client id given") unless defined $cid;
+
+  abort("there is no paragraph for client_id $cid")
+    unless my $indices = $self->_cid_indices->{$cid};
+
   my @triples = @{ $self->_struct }[ @$indices ];
   return JMAP::Tester::Response::Paragraph->new({
     sentences => [ map {;
