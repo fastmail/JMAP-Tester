@@ -17,7 +17,6 @@ use JMAP::Tester::Result::Failure;
 use JMAP::Tester::Result::Logout;
 use JMAP::Tester::Result::Upload;
 use Module::Runtime ();
-use Safe::Isa;
 use URI;
 
 =head1 OVERVIEW

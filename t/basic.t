@@ -4,7 +4,8 @@ use warnings;
 use JMAP::Tester::Response;
 use JSON::Typist 0.005; # $typist->number
 
-use Test::Deep;
+use Scalar::Util 'blessed';
+use Test::Deep ':v1';
 use Test::Deep::JType 0.005; # jstr() in both want and have
 use Test::Fatal;
 use Test::More;
@@ -90,7 +91,11 @@ subtest "the basic basics" => sub {
   is($res->sentence(2)->name, "drankBeer",       "s2 name");
   is($res->sentence(3)->name, "tookNap",         "s3 name");
   is($res->sentence(4)->name, "dreamed",         "s4 name");
-  aborts_ok(sub { $res->sentence(5) },           "s5 does not exist");
+  aborts_ok(
+    sub { $res->sentence(5) },
+    re('no sentence for index'),
+    "s5 does not exist",
+  );
 
   my ($p0, $p1, $p2) = $res->assert_n_paragraphs(3);
 
@@ -99,18 +104,35 @@ subtest "the basic basics" => sub {
   is($p1->sentence(0)->name, "drankBeer",       "p1 s0 name");
   is($p2->sentence(0)->name, "tookNap",         "p2 s0 name");
   is($p2->sentence(1)->name, "dreamed",         "p2 s1 name");
-  aborts_ok(sub { $p2->sentence(2) },           "p2 s2 does not exist");
+  aborts_ok(
+    sub { $p2->sentence(2) },
+    re('no sentence for index 2'),
+    "p2 s2 does not exist",
+  );
 
   is($res->paragraph(0)->client_id, 'a',    "p0 cid");
-  aborts_ok(sub { $res->paragraph(3) },     "p3 does not exist");
+  aborts_ok(
+    sub { $res->paragraph(3) },
+    re('no paragraph for index 3'),
+    "p3 does not exist",
+  );
 
   my @p2_sentences = $p2->sentences;
   is(@p2_sentences, 2, "p2 sentences");
 
   is($res->sentence_named('dreamed')->name, "dreamed", "res->sentence_named");
   is($p2->sentence_named('dreamed')->name,  "dreamed", "p2->sentence_named");
-  aborts_ok(sub { $res->sentence_named('poundedSand') }, "404 by name");
-  aborts_ok(sub { $p1->sentence_named('dreamed') }, "405 by name");
+  aborts_ok(
+    sub { $res->sentence_named('poundedSand') },
+    re('no sentence found with name "poundedSand"'),
+    "no sentence in response",
+  );
+
+  aborts_ok(
+    sub { $p1->sentence_named('poundedSand') },
+    re('no sentence found with name "poundedSand"'),
+    "no sentence in paragraph",
+  );
 };
 
 subtest "old style updated" => sub {
@@ -269,22 +291,53 @@ subtest "miscellaneous error conditions" => sub {
     ],
   });
 
-  aborts_ok(sub { $res_3->sentence_named('welcome') }, "ambiguous by name");
+  aborts_ok(
+    sub { $res_3->sentence_named('welcome') },
+    re('found more than one sentence with name "welcome"'),
+    "ambiguous by name"
+  );
+
   aborts_ok(
     sub { $res_3->paragraph(0)->sentence_named('welcome') },
+    re('found more than one sentence with name "welcome"'),
     "ambiguous by name",
   );
 };
 
 sub aborts_ok {
-  my ($code, $desc) = @_;
+  my ($code, $want, $desc);
+  if (@_ == 2) {
+    ($code, $desc) = @_;
+  } elsif (@_ == 3) {
+    ($code, $want, $desc) = @_;
+  } else {
+    Carp::confess("aborts_ok used wrongly");
+  }
+
   local $Test::Builder::Level = $Test::Builder::Level + 1;
   my $ok = eval { $code->(); 1 };
   my $error = $@;
 
-  ok(
-    ! $ok && eval { $error->isa('JMAP::Tester::Abort') },
-    "got an abort: $desc",
+  if ($ok) {
+    fail("code ran without exception: $desc");
+    return;
+  }
+
+  unless (blessed $error && $error->isa('JMAP::Tester::Abort')) {
+    fail("code threw non-abort: $desc");
+    diag("error thrown: $error");
+    return;
+  }
+
+  unless ($want) {
+    pass("got an abort: $desc");
+    return;
+  }
+
+  cmp_deeply(
+    $error,
+    $want,
+    "got expected abort: $desc",
   );
 }
 

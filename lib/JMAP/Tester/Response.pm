@@ -158,7 +158,7 @@ sub sentence_named {
   }
 
   if (@sentences > 1) {
-    abort(qq{found more than one sentence with name "%name"});
+    abort(qq{found more than one sentence with name "$name"});
   }
 
   return JMAP::Tester::Response::Sentence->new({
