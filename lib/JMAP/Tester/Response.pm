@@ -137,6 +137,36 @@ sub single_sentence {
   });
 }
 
+=method sentence_named
+
+  my $sentence = $response->sentence_named($name);
+
+This method returns the sentence with the given name.  If no such sentence
+exists, or if two sentences with the name exist, the tester will abort.
+
+=cut
+
+sub sentence_named {
+  my ($self, $name) = @_;
+
+  Carp::confess("no name given") unless defined $name;
+
+  my @sentences = grep {; $_->[0] eq $name } @{ $self->_struct };
+
+  unless (@sentences) {
+    abort(qq{no sentence found with name "$name"});
+  }
+
+  if (@sentences > 1) {
+    abort(qq{found more than one sentence with name "%name"});
+  }
+
+  return JMAP::Tester::Response::Sentence->new({
+    triple       => $sentences[0],
+    _json_typist => $self->_json_typist
+  });
+}
+
 =method paragraph
 
   my $para = $response->paragraph($n);

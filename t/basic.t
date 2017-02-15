@@ -106,6 +106,11 @@ subtest "the basic basics" => sub {
 
   my @p2_sentences = $p2->sentences;
   is(@p2_sentences, 2, "p2 sentences");
+
+  is($res->sentence_named('dreamed')->name, "dreamed", "res->sentence_named");
+  is($p2->sentence_named('dreamed')->name,  "dreamed", "p2->sentence_named");
+  aborts_ok(sub { $res->sentence_named('poundedSand') }, "404 by name");
+  aborts_ok(sub { $p1->sentence_named('dreamed') }, "405 by name");
 };
 
 subtest "old style updated" => sub {
@@ -255,6 +260,20 @@ subtest "miscellaneous error conditions" => sub {
     my $error = $@;
     ok($ok, "paragraph_by_client_id") or diag $error;
   }
+
+  my $res_3 = JMAP::Tester::Response->new({
+    _json_typist => $typist,
+    struct => [
+      [ welcome => { all => jstr('refugees') }, jstr('xyzzy') ],
+      [ welcome => { all => jstr('homeless') }, jstr('xyzzy') ],
+    ],
+  });
+
+  aborts_ok(sub { $res_3->sentence_named('welcome') }, "ambiguous by name");
+  aborts_ok(
+    sub { $res_3->paragraph(0)->sentence_named('welcome') },
+    "ambiguous by name",
+  );
 };
 
 sub aborts_ok {
