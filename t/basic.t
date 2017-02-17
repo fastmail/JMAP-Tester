@@ -84,6 +84,9 @@ subtest "the basic basics" => sub {
     }
   }
 
+  is($res->sentences,   5, "there are five sentences");
+  is($res->paragraphs,  3, "there are three paragraphs");
+
   ok($res->is_success, "a JMAP::Tester::Response is a success");
 
   is($res->sentence(0)->name, "atePies",         "s0 name");

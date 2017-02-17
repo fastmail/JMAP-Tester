@@ -105,6 +105,27 @@ sub sentence {
   });
 }
 
+=method sentences
+
+  my @sentences = $response->sentences;
+
+This method returns a list of all sentences in the response.
+
+=cut
+
+sub sentences {
+  my ($self) = @_;
+
+  my @sentences = map {;
+    JMAP::Tester::Response::Sentence->new({
+      triple       => $_,
+      _json_typist => $self->_json_typist
+    });
+  } @{ $self->_struct };
+
+  return @sentences;
+}
+
 =method single_sentence
 
   my $sentence = $response->single_sentence;
@@ -191,6 +212,36 @@ sub paragraph {
       }) } @triples ],
     _json_typist => $self->_json_typist,
   });
+}
+
+=method paragraphs
+
+  my @paragraphs = $response->paragraphs;
+
+This method returns a list of all paragraphs in the response.
+
+=cut
+
+sub paragraphs {
+  my ($self) = @_;
+
+  my @para_indices = @{ $self->_para_indices };
+
+  my @paragraphs;
+  for my $i_set (@para_indices) {
+    push @paragraphs, JMAP::Tester::Response::Paragraph->new({
+      sentences => [
+        map {;
+          JMAP::Tester::Response::Sentence->new({
+            triple => $_,
+            _json_typist => $self->_json_typist
+           }) } @{ $self->_struct }[ @$i_set ]
+      ],
+      _json_typist => $self->_json_typist,
+    });
+  }
+
+  return @paragraphs;
 }
 
 =method assert_n_paragraphs
