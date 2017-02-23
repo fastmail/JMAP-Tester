@@ -83,6 +83,8 @@ This returns a hashref mapping object ids to error properties.
 
 =cut
 
+sub as_set { $_[0] }
+
 sub created { $_[0]->arguments->{created} }
 
 sub created_id {
