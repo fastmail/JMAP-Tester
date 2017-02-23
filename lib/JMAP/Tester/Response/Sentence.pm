@@ -4,6 +4,8 @@ package JMAP::Tester::Response::Sentence;
 
 use Moo;
 
+use JMAP::Tester::Abort 'abort';
+
 =head1 OVERVIEW
 
 These objects represent sentences in the JMAP response.  That is, if your
@@ -101,6 +103,27 @@ sub as_set {
     client_id    => $_[0]->client_id,
     _json_typist => $_[0]->_json_typist,
   });
+}
+
+=method assert_named
+
+  $sentence->assert_named("theName")
+
+This method aborts unless the sentence's name is the given name.  Otherwise, it
+returns the sentence.
+
+=cut
+
+sub assert_named {
+  my ($self, $name) = @_;
+
+  Carp::confess("no name given") unless defined $name;
+
+  return $self if $self->name eq $name;
+
+  abort(
+    sprintf qq{expected sentence named "%s" but got "%s"}, $name, $self->name
+  );
 }
 
 1;

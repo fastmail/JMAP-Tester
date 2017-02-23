@@ -100,6 +100,15 @@ subtest "the basic basics" => sub {
     "s5 does not exist",
   );
 
+  ok($res->sentence(0)->assert_named('atePies'), "assert_named (Sentence)");
+  aborts_ok(
+    sub { $res->sentence(0)->assert_named("eatedPies") },
+    re('expected sentence named "eatedPies" but got "atePies"'),
+    "assert_named aborts when it should",
+  );
+
+  ok($res->sentence(0)->assert_named('atePies'), "assert_named works");
+
   my ($p0, $p1, $p2) = $res->assert_n_paragraphs(3);
 
   is($p0->sentence(0)->name, "atePies",         "p0 s0 name");
@@ -194,6 +203,31 @@ subtest "basic abort" => sub {
     index($pass[0]->name, 'single sentence has name "atePies" not "piesEt"'),
     -1,
     "and it's the abort we expect",
+  );
+};
+
+subtest "set assert_named" => sub {
+  my $res = JMAP::Tester::Response->new({
+    _json_typist => $typist,
+    struct => [
+      [
+        piecesSet => {
+          updated    => { foo => undef },
+          notUpdated => { fail => { type => jstr("internalJoke") } },
+          notDestroyed => { tick => { type => jstr("nighInvulnerabile") } },
+        },
+        'a',
+      ]
+    ],
+  });
+
+  my $s = $res->single_sentence('piecesSet')->as_set;
+
+  ok($res->sentence(0)->assert_named('piecesSet'), "assert_named (Set)");
+  aborts_ok(
+    sub { $res->sentence(0)->assert_named("setPieces") },
+    re('expected sentence named "setPieces" but got "piecesSet"'),
+    "assert_named aborts when it should",
   );
 };
 
