@@ -3,6 +3,7 @@ package JMAP::Tester::Response::Sentence::Set;
 # ABSTRACT: the kind of sentence you get in reply to a setFoos call
 
 use Moo;
+extends 'JMAP::Tester::Response::Sentence';
 
 use Data::Dumper ();
 use JMAP::Tester::Abort 'abort';
@@ -12,19 +13,6 @@ use JMAP::Tester::Abort 'abort';
 A "Set" sentence is a kind of L<Sentence|JMAP::Tester::Response::Sentence>
 for representing C<foosSet> results.  It has convenience methods for getting
 out the data returned in these kinds of sentences.
-
-=cut
-
-has name      => (is => 'ro', required => 1);
-has arguments => (is => 'ro', required => 1);
-has client_id => (is => 'ro', required => 1);
-
-has _json_typist => (
-  is => 'ro',
-  handles => {
-    _strip_json_types => 'strip_types',
-  },
-);
 
 =method new_state
 
