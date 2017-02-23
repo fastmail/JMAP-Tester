@@ -284,9 +284,11 @@ sub assert_n_paragraphs {
   Carp::confess("no paragraph count given") unless defined $n;
 
   my @para_indices = @{ $self->_para_indices };
-  if ($n and @para_indices != $n) {
+  unless ($n == @para_indices) {
     abort("expected $n paragraphs but got " . @para_indices)
   }
+
+  return unless $n;
 
   my $res = $self->_struct;
 
