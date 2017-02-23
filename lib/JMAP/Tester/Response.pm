@@ -190,6 +190,29 @@ sub sentence_named {
   });
 }
 
+=method assert_n_sentences
+
+  my ($s1, $s2, ...) = $response->assert_n_sentences($n);
+
+This method returns all the sentences in the response, as long as there are
+exactly C<$n>.  Otherwise, it throws an exception.
+
+=cut
+
+sub assert_n_sentences {
+  my ($self, $n) = @_;
+
+  Carp::confess("no sentence count given") unless defined $n;
+
+  my @sentences = $self->sentences;
+
+  unless (@sentences == $n) {
+    abort("expected $n sentences but got " . @sentences)
+  }
+
+  return @sentences;
+}
+
 =method paragraph
 
   my $para = $response->paragraph($n);
