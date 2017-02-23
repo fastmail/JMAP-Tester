@@ -195,7 +195,7 @@ sub sentence_named {
   my ($s1, $s2, ...) = $response->assert_n_sentences($n);
 
 This method returns all the sentences in the response, as long as there are
-exactly C<$n>.  Otherwise, it throws an exception.
+exactly C<$n>.  Otherwise, it aborts.
 
 =cut
 
@@ -274,7 +274,7 @@ sub paragraphs {
   my ($p1, $p2, ...) = $response->assert_n_paragraphs($n);
 
 This method returns all the paragraphs in the response, as long as there are
-exactly C<$n>.  Otherwise, it throws an exception.
+exactly C<$n>.  Otherwise, it aborts.
 
 =cut
 
