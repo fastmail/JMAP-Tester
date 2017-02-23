@@ -3,6 +3,8 @@ package JMAP::Tester::Abort;
 use Moo;
 extends 'Throwable::Error';
 
+use namespace::clean;
+
 use Sub::Exporter -setup => {
   exports => {
     abort => sub {

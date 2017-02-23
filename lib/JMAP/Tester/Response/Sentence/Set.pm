@@ -8,6 +8,8 @@ extends 'JMAP::Tester::Response::Sentence';
 use Data::Dumper ();
 use JMAP::Tester::Abort 'abort';
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 A "Set" sentence is a kind of L<Sentence|JMAP::Tester::Response::Sentence>

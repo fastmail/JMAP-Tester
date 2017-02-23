@@ -7,6 +7,8 @@ use Moo::Role;
 
 use JMAP::Tester::Abort ();
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 This is the role consumed by the class of any object returned by JMAP::Tester's

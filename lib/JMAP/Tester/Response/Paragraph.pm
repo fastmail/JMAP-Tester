@@ -6,6 +6,8 @@ use Moo;
 
 use JMAP::Tester::Abort 'abort';
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 These objects represent paragraphs in the JMAP response.  That is, if your

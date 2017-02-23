@@ -19,6 +19,8 @@ use JMAP::Tester::Result::Upload;
 use Module::Runtime ();
 use URI;
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 B<Achtung!>  This library is in its really early days, so use it with that in

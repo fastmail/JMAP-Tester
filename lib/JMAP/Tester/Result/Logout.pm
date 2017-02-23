@@ -7,6 +7,8 @@ package JMAP::Tester::Result::Logout;
 use Moo;
 with 'JMAP::Tester::Role::Result';
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 It's got an C<is_success> method.  It returns true.  Yup.

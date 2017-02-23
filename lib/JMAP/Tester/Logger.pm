@@ -5,6 +5,8 @@ use Moo::Role;
 use JMAP::Tester::LogWriter;
 use Params::Util qw(_CODELIKE _HANDLE _SCALAR0);
 
+use namespace::clean;
+
 has writer => (
   is  => 'ro',
   isa => sub {

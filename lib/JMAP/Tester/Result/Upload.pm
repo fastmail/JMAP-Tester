@@ -7,6 +7,8 @@ package JMAP::Tester::Result::Upload;
 use Moo;
 with 'JMAP::Tester::Role::Result';
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 This is what you get when you upload!  It's got an C<is_success> method.  It

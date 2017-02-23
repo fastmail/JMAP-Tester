@@ -3,6 +3,8 @@ package JMAP::Tester::Logger::HTTP;
 
 use Moo;
 
+use namespace::clean;
+
 my %counter;
 
 sub _log_generic {

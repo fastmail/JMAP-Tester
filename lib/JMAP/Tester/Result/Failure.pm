@@ -7,6 +7,8 @@ package JMAP::Tester::Result::Failure;
 use Moo;
 with 'JMAP::Tester::Role::Result';
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 This is the sort of worthless object you get back when your JMAP request fails.

@@ -10,6 +10,8 @@ use JMAP::Tester::Abort 'abort';
 use JMAP::Tester::Response::Sentence;
 use JMAP::Tester::Response::Paragraph;
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 A JMAP::Tester::Response object represents the successful response to a JMAP

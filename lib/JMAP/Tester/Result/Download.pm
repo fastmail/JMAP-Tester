@@ -7,6 +7,8 @@ package JMAP::Tester::Result::Download;
 use Moo;
 with 'JMAP::Tester::Role::Result';
 
+use namespace::clean;
+
 =head1 OVERVIEW
 
 This is what you get when you download!  It's got an C<is_success> method.  It

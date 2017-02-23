@@ -4,10 +4,13 @@ use Moo::Role;
 
 requires 'write';
 
+use namespace::clean;
+
 {
   package JMAP::Tester::LogWriter::Code;
 
   use Moo;
+  use namespace::clean;
   with 'JMAP::Tester::LogWriter';
   has code => (is => 'ro', required => 1);
   sub write { $_[0]->code->($_[1]) }
@@ -17,6 +20,7 @@ requires 'write';
   package JMAP::Tester::LogWriter::Handle;
 
   use Moo;
+  use namespace::clean;
   with 'JMAP::Tester::LogWriter';
   has handle => (is => 'ro', required => 1);
   sub write { $_[0]->handle->print($_[1]) }
@@ -26,6 +30,7 @@ requires 'write';
   package JMAP::Tester::LogWriter::Filename;
 
   use Moo;
+  use namespace::clean;
   with 'JMAP::Tester::LogWriter';
   has filename_template => (
     is       => 'ro',

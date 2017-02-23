@@ -3,6 +3,8 @@ package JMAP::Tester::Logger::Null;
 use Moo;
 with 'JMAP::Tester::Logger';
 
+use namespace::clean;
+
 sub log_jmap_request  {}
 sub log_jmap_response {}
 
