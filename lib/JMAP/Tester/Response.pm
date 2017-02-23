@@ -190,6 +190,29 @@ sub sentence_named {
   });
 }
 
+=method assert_n_sentences
+
+  my ($s1, $s2, ...) = $response->assert_n_sentences($n);
+
+This method returns all the sentences in the response, as long as there are
+exactly C<$n>.  Otherwise, it aborts.
+
+=cut
+
+sub assert_n_sentences {
+  my ($self, $n) = @_;
+
+  Carp::confess("no sentence count given") unless defined $n;
+
+  my @sentences = $self->sentences;
+
+  unless (@sentences == $n) {
+    abort("expected $n sentences but got " . @sentences)
+  }
+
+  return @sentences;
+}
+
 =method paragraph
 
   my $para = $response->paragraph($n);
@@ -251,7 +274,7 @@ sub paragraphs {
   my ($p1, $p2, ...) = $response->assert_n_paragraphs($n);
 
 This method returns all the paragraphs in the response, as long as there are
-exactly C<$n>.  Otherwise, it throws an exception.
+exactly C<$n>.  Otherwise, it aborts.
 
 =cut
 
@@ -261,9 +284,11 @@ sub assert_n_paragraphs {
   Carp::confess("no paragraph count given") unless defined $n;
 
   my @para_indices = @{ $self->_para_indices };
-  if ($n and @para_indices != $n) {
+  unless ($n == @para_indices) {
     abort("expected $n paragraphs but got " . @para_indices)
   }
+
+  return unless $n;
 
   my $res = $self->_struct;
 
