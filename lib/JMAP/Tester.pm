@@ -583,6 +583,8 @@ sub logout {
   );
 
   if ($logout_res->code == 204) {
+    $self->_access_token(undef);
+
     return JMAP::Tester::Result::Logout->new({
       http_response => $logout_res,
     });
