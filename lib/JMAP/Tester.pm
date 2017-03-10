@@ -6,6 +6,8 @@ package JMAP::Tester;
 
 use Moo;
 
+use Crypt::Misc qw(decode_b64u encode_b64u);
+use Crypt::Mac::HMAC qw(hmac_b64u);
 use Encode qw(encode_utf8);
 use HTTP::Request;
 use JMAP::Tester::Abort 'abort';
@@ -18,6 +20,7 @@ use JMAP::Tester::Result::Logout;
 use JMAP::Tester::Result::Upload;
 use Module::Runtime ();
 use URI;
+use URI::QueryParam;
 
 use namespace::clean;
 
@@ -392,10 +395,10 @@ result|JMAP::Tester::Result::Download>.
 
 my %DL_DEFAULT = (name => 'download');
 
-sub download {
+sub download_uri_for {
   my ($self, $arg) = @_;
 
-  Carp::confess("can't download without download_uri")
+  Carp::confess("can't compute download URI without configured download_uri")
     unless my $uri = $self->download_uri;
 
   for my $param (qw(blobId accountId name)) {
@@ -407,6 +410,41 @@ sub download {
 
     $uri =~ s/\{$param\}/$value/g;
   }
+
+  if (my $jwtc = $self->_jwt_config) {
+    my $to_get  = URI->new($uri);
+    my $to_sign = $to_get->clone->canonical;
+
+    $to_sign->query(undef);
+
+    my $header = encode_b64u( $self->json_encode({
+      alg => 'HS256',
+      typ => 'JWT',
+    }) );
+
+    my $payload = encode_b64u( $self->json_encode({
+      iss => $jwtc->{signingId},
+      iat => time,
+      sub => "$to_sign",
+    }) );
+
+    my $signature = hmac_b64u(
+      'SHA256',
+      decode_b64u($jwtc->{signingKey}),
+      "$header.$payload",
+    );
+
+		$to_get->query_param(access_token => "$header.$payload.$signature");
+		$uri = "$to_get";
+  }
+
+  return $uri;
+}
+
+sub download {
+  my ($self, $arg) = @_;
+
+  my $uri = $self->download_uri_for($arg);
 
   my $get = HTTP::Request->new(
     GET => $uri,
@@ -450,6 +488,11 @@ sub _maybe_auth_header {
           ? (Authorization => "Bearer " . $self->_access_token)
           : ());
 }
+
+has _jwt_config => (
+  is => 'rw',
+  init_arg => undef,
+);
 
 has _access_token => (
   is  => 'rw',
@@ -525,6 +568,12 @@ sub simple_auth {
 
   $self->_access_token($client_session->{accessToken});
 
+  if ($client_session->{signingId} && $client_session->{signingKey}) {
+    $self->_jwt_config({
+      signingId   => $client_session->{signingId},
+      signingKey  => $client_session->{signingKey},
+    });
+  }
 
   my $auth = JMAP::Tester::Result::Auth->new({
     http_response   => $next_res,
