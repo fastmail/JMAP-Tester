@@ -18,7 +18,7 @@ It returns true.
 
 sub is_success { 1 }
 
-has auth_struct => (
+has client_session => (
   is => 'ro',
 );
 

@@ -518,16 +518,17 @@ sub simple_auth {
     });
   }
 
-  my $auth_struct = $self->json_decode( $next_res->decoded_content );
+  my $client_session = $self->json_decode( $next_res->decoded_content );
 
   abort("no accessToken in client session object")
-    unless $auth_struct->{accessToken};
+    unless $client_session->{accessToken};
 
-  $self->_access_token($auth_struct->{accessToken});
+  $self->_access_token($client_session->{accessToken});
+
 
   my $auth = JMAP::Tester::Result::Auth->new({
-    http_response => $next_res,
-    auth_struct   => $auth_struct,
+    http_response   => $next_res,
+    client_session  => $client_session,
   });
 
   $self->_update_uris_from_auth($auth);
