@@ -141,6 +141,7 @@ sub _set_cookie {
     ($uri->port == 443 ? 1 : 0),
     86400,
     0,
+    $arg->{rest} || {},
   );
 }
 
