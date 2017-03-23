@@ -629,10 +629,12 @@ sub _configure_from_auth {
   # X-JMAP-AccountId or other things, but I think there are too many open
   # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
 
- my $client_session = $auth->client_session;
+  my $client_session = $auth->client_session;
 
- abort("no accessToken in client session object")
-  unless $client_session->{accessToken};
+  # This is no longer fatal because you might be an anonymous session that
+  # needs to call this to fetch an updated signing key. -- rjbs, 2017-03-23
+  # abort("no accessToken in client session object")
+  #  unless $client_session->{accessToken};
 
   $self->_access_token($client_session->{accessToken});
 
