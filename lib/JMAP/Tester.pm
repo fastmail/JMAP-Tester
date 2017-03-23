@@ -434,8 +434,8 @@ sub download_uri_for {
       "$header.$payload",
     );
 
-		$to_get->query_param(access_token => "$header.$payload.$signature");
-		$uri = "$to_get";
+    $to_get->query_param(access_token => "$header.$payload.$signature");
+    $uri = "$to_get";
   }
 
   return $uri;
