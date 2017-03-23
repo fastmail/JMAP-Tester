@@ -411,7 +411,7 @@ sub download_uri_for {
     $uri =~ s/\{$param\}/$value/g;
   }
 
-  if (my $jwtc = $self->_jwt_config) {
+  if (my $jwtc = $self->_get_jwt_config) {
     my $to_get  = URI->new($uri);
     my $to_sign = $to_get->clone->canonical;
 
@@ -493,6 +493,25 @@ has _jwt_config => (
   is => 'rw',
   init_arg => undef,
 );
+
+sub _now_timestamp {
+  #   0     1     2      3      4     5
+  my ($sec, $min, $hour, $mday, $mon, $year) = gmtime;
+  return sprintf '%04u-%02u-%02uT%02u:%02u:%02uZ',
+    $year + 1900, $mon + 1, $mday,
+    $hour, $min, $sec;
+}
+
+sub _get_jwt_config {
+  my ($self) = @_;
+  return unless my $jwtc = $self->_jwt_config;
+  return $jwtc unless $jwtc->{signingKeyValidUntil};
+  return $jwtc if $jwtc->{signingKeyValidUntil} gt $self->_now_timestamp;
+
+  $self->_update_auth;
+  return unless $jwtc = $self->_jwt_config;
+  return $jwtc;
+}
 
 has _access_token => (
   is  => 'rw',
@@ -621,6 +640,7 @@ sub _configure_from_auth {
     $self->_jwt_config({
       signingId   => $client_session->{signingId},
       signingKey  => $client_session->{signingKey},
+      signingKeyValidUntil => $client_session->{signingKeyValidUntil},
     });
   }
 
