@@ -563,8 +563,57 @@ sub simple_auth {
 
   my $client_session = $self->json_decode( $next_res->decoded_content );
 
-  abort("no accessToken in client session object")
-    unless $client_session->{accessToken};
+  my $auth = JMAP::Tester::Result::Auth->new({
+    http_response   => $next_res,
+    client_session  => $client_session,
+  });
+
+  $self->_configure_from_auth($auth);
+
+  return $auth;
+}
+
+sub _update_auth {
+  my ($self) = @_;
+
+  my $auth_res = $self->ua->get(
+    $self->authentication_uri,
+    $self->_maybe_auth_header,
+    'Accept' => 'application/json',
+  );
+
+  unless ($auth_res->code == 201) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => 'failure to get updated authentication data',
+      http_response => $auth_res,
+    });
+  }
+
+  my $client_session = $self->json_decode( $auth_res->decoded_content );
+
+  my $auth = JMAP::Tester::Result::Auth->new({
+    http_response   => $auth_res,
+    client_session  => $client_session,
+  });
+
+  $self->_configure_from_auth($auth);
+
+  return $auth;
+}
+
+sub _configure_from_auth {
+  my ($self, $auth) = @_;
+
+  # It's not crazy to think that we'd also try to pull the primary accountId
+  # out of the accounts in the auth struct, but I don't think there's a lot to
+  # gain by doing that yet.  Maybe later we'd use it to set the default
+  # X-JMAP-AccountId or other things, but I think there are too many open
+  # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
+
+ my $client_session = $auth->client_session;
+
+ abort("no accessToken in client session object")
+  unless $client_session->{accessToken};
 
   $self->_access_token($client_session->{accessToken});
 
@@ -575,27 +624,8 @@ sub simple_auth {
     });
   }
 
-  my $auth = JMAP::Tester::Result::Auth->new({
-    http_response   => $next_res,
-    client_session  => $client_session,
-  });
-
-  $self->_update_uris_from_auth($auth);
-
-  return $auth;
-}
-
-sub _update_uris_from_auth {
-  my ($self, $auth) = @_;
-
-  # It's not crazy to think that we'd also try to pull the primary accountId
-  # out of the accounts in the auth struct, but I don't think there's a lot to
-  # gain by doing that yet.  Maybe later we'd use it to set the default
-  # X-JMAP-AccountId or other things, but I think there are too many open
-  # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
-
   for my $type (qw(api download upload)) {
-    if (defined (my $uri = $auth->auth_struct->{"${type}Url"})) {
+    if (defined (my $uri = $auth->client_session->{"${type}Url"})) {
       my $setter = "$type\_uri";
       $self->$setter($uri);
     } else {
