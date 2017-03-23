@@ -545,7 +545,7 @@ sub simple_auth {
     value   => $password,
   });
 
-  my $next_res = $self->ua-post(
+  my $next_res = $self->ua->post(
     $self->authentication_uri,
     [
       'Content-Type' => 'application/json; charset=utf-8',
