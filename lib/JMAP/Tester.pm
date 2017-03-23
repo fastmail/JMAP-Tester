@@ -601,7 +601,7 @@ sub _update_auth {
     'Accept' => 'application/json',
   );
 
-  unless ($auth_res->code == 201) {
+  unless ($auth_res->code == 200) {
     return JMAP::Tester::Result::Failure->new({
       ident         => 'failure to get updated authentication data',
       http_response => $auth_res,
