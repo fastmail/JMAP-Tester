@@ -6,6 +6,8 @@ package JMAP::Tester;
 
 use Moo;
 
+use Crypt::Misc qw(decode_b64u encode_b64u);
+use Crypt::Mac::HMAC qw(hmac_b64u);
 use Encode qw(encode_utf8);
 use HTTP::Request;
 use JMAP::Tester::Abort 'abort';
@@ -18,6 +20,7 @@ use JMAP::Tester::Result::Logout;
 use JMAP::Tester::Result::Upload;
 use Module::Runtime ();
 use URI;
+use URI::QueryParam;
 
 use namespace::clean;
 
@@ -392,10 +395,10 @@ result|JMAP::Tester::Result::Download>.
 
 my %DL_DEFAULT = (name => 'download');
 
-sub download {
+sub download_uri_for {
   my ($self, $arg) = @_;
 
-  Carp::confess("can't download without download_uri")
+  Carp::confess("can't compute download URI without configured download_uri")
     unless my $uri = $self->download_uri;
 
   for my $param (qw(blobId accountId name)) {
@@ -407,6 +410,41 @@ sub download {
 
     $uri =~ s/\{$param\}/$value/g;
   }
+
+  if (my $jwtc = $self->_get_jwt_config) {
+    my $to_get  = URI->new($uri);
+    my $to_sign = $to_get->clone->canonical;
+
+    $to_sign->query(undef);
+
+    my $header = encode_b64u( $self->json_encode({
+      alg => 'HS256',
+      typ => 'JWT',
+    }) );
+
+    my $payload = encode_b64u( $self->json_encode({
+      iss => $jwtc->{signingId},
+      iat => time,
+      sub => "$to_sign",
+    }) );
+
+    my $signature = hmac_b64u(
+      'SHA256',
+      decode_b64u($jwtc->{signingKey}),
+      "$header.$payload",
+    );
+
+    $to_get->query_param(access_token => "$header.$payload.$signature");
+    $uri = "$to_get";
+  }
+
+  return $uri;
+}
+
+sub download {
+  my ($self, $arg) = @_;
+
+  my $uri = $self->download_uri_for($arg);
 
   my $get = HTTP::Request->new(
     GET => $uri,
@@ -449,6 +487,30 @@ sub _maybe_auth_header {
   return ($self->_access_token
           ? (Authorization => "Bearer " . $self->_access_token)
           : ());
+}
+
+has _jwt_config => (
+  is => 'rw',
+  init_arg => undef,
+);
+
+sub _now_timestamp {
+  #   0     1     2      3      4     5
+  my ($sec, $min, $hour, $mday, $mon, $year) = gmtime;
+  return sprintf '%04u-%02u-%02uT%02u:%02u:%02uZ',
+    $year + 1900, $mon + 1, $mday,
+    $hour, $min, $sec;
+}
+
+sub _get_jwt_config {
+  my ($self) = @_;
+  return unless my $jwtc = $self->_jwt_config;
+  return $jwtc unless $jwtc->{signingKeyValidUntil};
+  return $jwtc if $jwtc->{signingKeyValidUntil} gt $self->_now_timestamp;
+
+  $self->_update_auth;
+  return unless $jwtc = $self->_jwt_config;
+  return $jwtc;
 }
 
 has _access_token => (
@@ -502,7 +564,7 @@ sub simple_auth {
     value   => $password,
   });
 
-  my $next_res = $self->ua-post(
+  my $next_res = $self->ua->post(
     $self->authentication_uri,
     [
       'Content-Type' => 'application/json; charset=utf-8',
@@ -520,23 +582,45 @@ sub simple_auth {
 
   my $client_session = $self->json_decode( $next_res->decoded_content );
 
-  abort("no accessToken in client session object")
-    unless $client_session->{accessToken};
-
-  $self->_access_token($client_session->{accessToken});
-
-
   my $auth = JMAP::Tester::Result::Auth->new({
     http_response   => $next_res,
     client_session  => $client_session,
   });
 
-  $self->_update_uris_from_auth($auth);
+  $self->_configure_from_auth($auth);
 
   return $auth;
 }
 
-sub _update_uris_from_auth {
+sub _update_auth {
+  my ($self) = @_;
+
+  my $auth_res = $self->ua->get(
+    $self->authentication_uri,
+    $self->_maybe_auth_header,
+    'Accept' => 'application/json',
+  );
+
+  unless ($auth_res->code == 200) {
+    return JMAP::Tester::Result::Failure->new({
+      ident         => 'failure to get updated authentication data',
+      http_response => $auth_res,
+    });
+  }
+
+  my $client_session = $self->json_decode( $auth_res->decoded_content );
+
+  my $auth = JMAP::Tester::Result::Auth->new({
+    http_response   => $auth_res,
+    client_session  => $client_session,
+  });
+
+  $self->_configure_from_auth($auth);
+
+  return $auth;
+}
+
+sub _configure_from_auth {
   my ($self, $auth) = @_;
 
   # It's not crazy to think that we'd also try to pull the primary accountId
@@ -545,8 +629,25 @@ sub _update_uris_from_auth {
   # X-JMAP-AccountId or other things, but I think there are too many open
   # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
 
+  my $client_session = $auth->client_session;
+
+  # This is no longer fatal because you might be an anonymous session that
+  # needs to call this to fetch an updated signing key. -- rjbs, 2017-03-23
+  # abort("no accessToken in client session object")
+  #  unless $client_session->{accessToken};
+
+  $self->_access_token($client_session->{accessToken});
+
+  if ($client_session->{signingId} && $client_session->{signingKey}) {
+    $self->_jwt_config({
+      signingId   => $client_session->{signingId},
+      signingKey  => $client_session->{signingKey},
+      signingKeyValidUntil => $client_session->{signingKeyValidUntil},
+    });
+  }
+
   for my $type (qw(api download upload)) {
-    if (defined (my $uri = $auth->auth_struct->{"${type}Url"})) {
+    if (defined (my $uri = $auth->client_session->{"${type}Url"})) {
       my $setter = "$type\_uri";
       $self->$setter($uri);
     } else {
