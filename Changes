@@ -2,6 +2,11 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.012     2017-03-24 19:12:50-04:00 America/New_York
+        - JWT access tokens for authenticated GET now supported
+        - logout should be more reliable
+        - renamed auth_struct to client_session
+
 0.011     2017-02-23 11:34:22-08:00 America/Los_Angeles
         - add ->sentence_named to Response and Paragraph
         - add ->sentences and ->paragraphs to Response
