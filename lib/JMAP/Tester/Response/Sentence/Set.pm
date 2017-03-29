@@ -160,7 +160,7 @@ sub assert_no_errors {
     );
   }
 
-  return unless @errors;
+  return $self unless @errors;
 
   abort({
     message     => "errors found in " . $self->name . " sentence",
