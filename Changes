@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - assert_successful_set and assert_single_successful_set
 
 0.012     2017-03-24 19:12:50-04:00 America/New_York
         - JWT access tokens for authenticated GET now supported
