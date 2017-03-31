@@ -1,7 +1,10 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.013     2017-03-31 18:25:11-05:00 America/Chicago
         - assert_successful_set and assert_single_successful_set
+        - $set_sentence->assert_no_errors now returns $set_sentence on okay
 
 0.012     2017-03-24 19:12:50-04:00 America/New_York
         - JWT access tokens for authenticated GET now supported
