@@ -653,6 +653,8 @@ sub configure_from_client_session {
       signingKey  => $client_session->{signingKey},
       signingKeyValidUntil => $client_session->{signingKeyValidUntil},
     });
+  } else {
+    $self->_jwt_config(undef);
   }
 
   for my $type (qw(api download upload)) {
