@@ -621,6 +621,16 @@ sub _update_auth {
   return $auth;
 }
 
+=method configure_from_client_session
+
+  $tester->configure_from_client_session($client_session);
+
+Given a client session object (like those stored in an Auth result), this
+reconfigures the testers access token, signing keys, URIs, and so forth.  This
+method is used internally when logging in.
+
+=cut
+
 sub configure_from_client_session {
   my ($self, $client_session) = @_;
 
