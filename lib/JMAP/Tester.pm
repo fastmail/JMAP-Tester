@@ -588,7 +588,7 @@ sub simple_auth {
     client_session  => $client_session,
   });
 
-  $self->_configure_from_auth($auth);
+  $self->configure_from_client_session($client_session);
 
   return $auth;
 }
@@ -616,21 +616,19 @@ sub _update_auth {
     client_session  => $client_session,
   });
 
-  $self->_configure_from_auth($auth);
+  $self->configure_from_client_session($client_session);
 
   return $auth;
 }
 
-sub _configure_from_auth {
-  my ($self, $auth) = @_;
+sub configure_from_client_session {
+  my ($self, $client_session) = @_;
 
   # It's not crazy to think that we'd also try to pull the primary accountId
   # out of the accounts in the auth struct, but I don't think there's a lot to
   # gain by doing that yet.  Maybe later we'd use it to set the default
   # X-JMAP-AccountId or other things, but I think there are too many open
   # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
-
-  my $client_session = $auth->client_session;
 
   # This is no longer fatal because you might be an anonymous session that
   # needs to call this to fetch an updated signing key. -- rjbs, 2017-03-23
@@ -648,7 +646,7 @@ sub _configure_from_auth {
   }
 
   for my $type (qw(api download upload)) {
-    if (defined (my $uri = $auth->client_session->{"${type}Url"})) {
+    if (defined (my $uri = $client_session->{"${type}Url"})) {
       my $setter = "$type\_uri";
       $self->$setter($uri);
     } else {
