@@ -509,7 +509,7 @@ sub _get_jwt_config {
   return $jwtc unless $jwtc->{signingKeyValidUntil};
   return $jwtc if $jwtc->{signingKeyValidUntil} gt $self->_now_timestamp;
 
-  $self->_update_auth;
+  $self->update_client_session;
   return unless $jwtc = $self->_jwt_config;
   return $jwtc;
 }
@@ -588,16 +588,27 @@ sub simple_auth {
     client_session  => $client_session,
   });
 
-  $self->_configure_from_auth($auth);
+  $self->configure_from_client_session($client_session);
 
   return $auth;
 }
 
-sub _update_auth {
-  my ($self) = @_;
+=method update_client_session
+
+  $tester->update_client_session;
+  $tester->update_client_session($auth_uri);
+
+This method fetches the content at the authentication endpoint and uses it to
+configure the tester's target URIs and signing keys.
+
+=cut
+
+sub update_client_session {
+  my ($self, $auth_uri) = @_;
+  $auth_uri //= $self->authentication_uri;
 
   my $auth_res = $self->ua->get(
-    $self->authentication_uri,
+    $auth_uri,
     $self->_maybe_auth_header,
     'Accept' => 'application/json',
   );
@@ -616,21 +627,29 @@ sub _update_auth {
     client_session  => $client_session,
   });
 
-  $self->_configure_from_auth($auth);
+  $self->configure_from_client_session($client_session);
 
   return $auth;
 }
 
-sub _configure_from_auth {
-  my ($self, $auth) = @_;
+=method configure_from_client_session
+
+  $tester->configure_from_client_session($client_session);
+
+Given a client session object (like those stored in an Auth result), this
+reconfigures the testers access token, signing keys, URIs, and so forth.  This
+method is used internally when logging in.
+
+=cut
+
+sub configure_from_client_session {
+  my ($self, $client_session) = @_;
 
   # It's not crazy to think that we'd also try to pull the primary accountId
   # out of the accounts in the auth struct, but I don't think there's a lot to
   # gain by doing that yet.  Maybe later we'd use it to set the default
   # X-JMAP-AccountId or other things, but I think there are too many open
   # questions.  I'm leaving it out on purpose for now. -- rjbs, 2016-11-18
-
-  my $client_session = $auth->client_session;
 
   # This is no longer fatal because you might be an anonymous session that
   # needs to call this to fetch an updated signing key. -- rjbs, 2017-03-23
@@ -645,10 +664,12 @@ sub _configure_from_auth {
       signingKey  => $client_session->{signingKey},
       signingKeyValidUntil => $client_session->{signingKeyValidUntil},
     });
+  } else {
+    $self->_jwt_config(undef);
   }
 
-  for my $type (qw(api download upload)) {
-    if (defined (my $uri = $auth->client_session->{"${type}Url"})) {
+  for my $type (qw(api authentication download upload)) {
+    if (defined (my $uri = $client_session->{"${type}Url"})) {
       my $setter = "$type\_uri";
       $self->$setter($uri);
     } else {
