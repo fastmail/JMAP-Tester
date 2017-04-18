@@ -2,6 +2,11 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.014     2017-04-18 10:22:11-04:00 America/New_York
+        - add update_client_session and configure_from_client_session;
+          These methods should make it easier to bootstrap your tester from a
+          running server.
+
 0.013     2017-03-31 18:25:11-05:00 America/Chicago
         - assert_successful_set and assert_single_successful_set
         - $set_sentence->assert_no_errors now returns $set_sentence on okay
