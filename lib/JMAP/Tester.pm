@@ -594,10 +594,11 @@ sub simple_auth {
 }
 
 sub _update_auth {
-  my ($self) = @_;
+  my ($self, $auth_uri) = @_;
+  $auth_uri //= $self->authentication_uri;
 
   my $auth_res = $self->ua->get(
-    $self->authentication_uri,
+    $auth_uri,
     $self->_maybe_auth_header,
     'Accept' => 'application/json',
   );
