@@ -509,7 +509,7 @@ sub _get_jwt_config {
   return $jwtc unless $jwtc->{signingKeyValidUntil};
   return $jwtc if $jwtc->{signingKeyValidUntil} gt $self->_now_timestamp;
 
-  $self->_update_auth;
+  $self->update_client_session;
   return unless $jwtc = $self->_jwt_config;
   return $jwtc;
 }
@@ -593,7 +593,17 @@ sub simple_auth {
   return $auth;
 }
 
-sub _update_auth {
+=method update_client_session
+
+  $tester->update_client_session;
+  $tester->update_client_session($auth_uri);
+
+This method fetches the content at the authentication endpoint and uses it to
+configure the tester's target URIs and signing keys.
+
+=cut
+
+sub update_client_session {
   my ($self, $auth_uri) = @_;
   $auth_uri //= $self->authentication_uri;
 
