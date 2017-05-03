@@ -266,6 +266,13 @@ sub request {
 
   my $http_res = $self->ua->request($post);
 
+  # In set_my_handler above, we create a memory cycle since $self->ua
+  # gets a request_send handler that uses $self to get at _logger. By
+  # removing the handler when we're done with it, we clear that cycle and
+  # let our object get cleaned up when it goes out of scope rather than
+  # waiting for global destruction.
+  $self->ua->set_my_handler(request_send => sub {});
+
   unless ($http_res->is_success) {
     $self->_logger->log_jmap_response({
       http_response => $http_res,
