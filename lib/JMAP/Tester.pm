@@ -21,6 +21,7 @@ use JMAP::Tester::Result::Upload;
 use Module::Runtime ();
 use URI;
 use URI::QueryParam;
+use Scalar::Util qw(weaken);
 
 use namespace::clean;
 
@@ -253,6 +254,9 @@ sub request {
     ],
     $json,
   );
+
+  # Or our sub below leaks us
+  weaken $self;
 
   $self->ua->set_my_handler(request_send => sub {
     my ($req) = @_;
