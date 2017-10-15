@@ -4,8 +4,6 @@ package JMAP::Tester::Response::Sentence;
 
 use Moo;
 
-use JMAP::Tester::Abort 'abort';
-
 use namespace::clean;
 
 =head1 OVERVIEW
@@ -27,31 +25,17 @@ method.
 
 =cut
 
-sub BUILDARGS {
-  my ($self, $args) = @_;
-
-  if (my $triple = delete $args->{triple}) {
-    return {
-      %$args,
-
-      name      => $triple->[0],
-      arguments => $triple->[1],
-      client_id => $triple->[2],
-    };
-  }
-  return $self->SUPER::BUILDARGS($args);
-}
-
 has name      => (is => 'ro', required => 1);
 has arguments => (is => 'ro', required => 1);
 has client_id => (is => 'ro', required => 1);
 
-has _json_typist => (
-  is => 'ro',
-  handles => {
-    _strip_json_types => 'strip_types',
-  },
-);
+has _jmap_response_abort_callback       => (is => 'ro');
+has _jmap_response_strip_types_callback => (is => 'ro');
+
+sub _strip_json_types {
+  my ($self, $whatever) = @_;
+  $self->_jmap_response_strip_types_callback->($whatever);
+}
 
 =method as_struct
 
@@ -69,7 +53,7 @@ These return a three-element arrayref.
 sub as_struct { [ $_[0]->name, $_[0]->arguments, $_[0]->client_id ] }
 
 sub as_stripped_struct {
-  $_[0]->_strip_json_types($_[0]->as_struct);
+  $_[0]->_jmap_response_strip_types_callback->($_[0]->as_struct);
 }
 
 =method as_pair
@@ -86,7 +70,7 @@ C<as_stripped_pair> returns the same minus JSON type information.
 sub as_pair { [ $_[0]->name, $_[0]->arguments ] }
 
 sub as_stripped_pair {
-  $_[0]->_strip_json_types($_[0]->as_pair);
+  $_[0]->_jmap_response_strip_types_callback->($_[0]->as_pair);
 }
 
 =method as_set
@@ -103,7 +87,9 @@ sub as_set {
     name         => $_[0]->name,
     arguments    => $_[0]->arguments,
     client_id    => $_[0]->client_id,
-    _json_typist => $_[0]->_json_typist,
+
+    _jmap_response_abort_callback       => $_[0]->_jmap_response_abort_callback,
+    _jmap_response_strip_types_callback => $_[0]->_jmap_response_strip_types_callback,
   });
 }
 
@@ -123,7 +109,7 @@ sub assert_named {
 
   return $self if $self->name eq $name;
 
-  abort(
+  $self->_jmap_response_abort_callback->(
     sprintf qq{expected sentence named "%s" but got "%s"}, $name, $self->name
   );
 }

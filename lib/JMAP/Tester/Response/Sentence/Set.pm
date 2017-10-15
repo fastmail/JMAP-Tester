@@ -162,7 +162,7 @@ sub assert_no_errors {
 
   return $self unless @errors;
 
-  abort({
+  $self->_jmap_response_abort_callback->({
     message     => "errors found in " . $self->name . " sentence",
     diagnostics => \@errors,
   });
