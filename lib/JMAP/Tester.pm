@@ -22,6 +22,7 @@ use Module::Runtime ();
 use URI;
 use URI::QueryParam;
 use Scalar::Util qw(weaken);
+use URI::Escape qw(uri_escape);
 
 use namespace::clean;
 
@@ -412,6 +413,10 @@ sub download_uri_for {
 
     Carp::confess("missing required template parameter $param")
       unless defined $value;
+
+    if ($param eq 'name') {
+      $value = uri_escape($value);
+    }
 
     $uri =~ s/\{$param\}/$value/g;
   }
