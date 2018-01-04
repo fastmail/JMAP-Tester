@@ -32,4 +32,8 @@ has items => (
 
 sub items { @{ $_[0]->_items } }
 
+sub sentence_broker {
+  state $BROKER = JMAP::Tester::SentenceBroker->new;
+}
+
 1;

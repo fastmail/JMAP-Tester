@@ -2,18 +2,25 @@ package JMAP::Tester::Role::SentenceCollection;
 
 use Moo::Role;
 
-has sentence_broker => (
-  is       => 'ro',
-  required => 1,
-  handles  => [ qw(
+requires 'sentence_broker';
+
+BEGIN {
+  for my $m (qw(
     client_ids_for_items
     sentence_for_item
     paragraph_for_items
 
     abort_callback
     strip_json_types
-  ) ],
-);
+  )) {
+    my $sub = sub {
+      my $self = shift;
+      $self->sentence_broker->$m(@_);
+    };
+    no strict 'refs';
+    *$m = $sub;
+  }
+}
 
 requires 'items';
 
