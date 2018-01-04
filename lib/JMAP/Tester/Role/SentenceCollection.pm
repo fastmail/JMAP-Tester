@@ -1,13 +1,21 @@
-package JMAP::Response;
+package JMAP::Tester::Role::SentenceCollection;
+
 use Moo::Role;
 
-requires '_jmap_response_items';
-requires '_jmap_response_client_ids';
-requires '_jmap_response_sentence_for_item';
-requires '_jmap_response_paragraph_for_items';
+has sentence_broker => (
+  is       => 'ro',
+  required => 1,
+  handles  => [ qw(
+    client_ids_for_items
+    sentence_for_item
+    paragraph_for_items
 
-requires '_jmap_response_abort_callback';
-requires '_jmap_response_strip_types_callback';
+    abort_callback
+    strip_json_types
+  ) ],
+);
+
+requires 'items';
 
 sub BUILD {
   $_[0]->_index_setup;
@@ -16,7 +24,7 @@ sub BUILD {
 sub _index_setup {
   my ($self) = @_;
 
-  my @cids = $self->_jmap_response_client_ids;
+  my @cids = $self->client_ids_for_items([ $self->items ]);
 
   my $prev_cid;
   my $next_para_idx = 0;
@@ -33,7 +41,7 @@ sub _index_setup {
 
     if (defined $prev_cid && $prev_cid ne $cid) {
       # We're transition from cid1 to cid2. -- rjbs, 2016-04-08
-      $self->_jmap_response_abort_callback->("client_id <$cid> appears in non-contiguous positions")
+      $self->abort_callback->("client_id <$cid> appears in non-contiguous positions")
         if $cid_indices{$cid};
 
       $next_para_idx++;
@@ -67,11 +75,11 @@ the response.
 sub sentence {
   my ($self, $n) = @_;
 
-  my @items = $self->_jmap_response_items;
-  $self->_jmap_response_abort_callback->("there is no sentence for index $n")
+  my @items = $self->items;
+  $self->abort_callback->("there is no sentence for index $n")
     unless my $item = $items[$n];
 
-  return $self->_jmap_response_sentence_for_item($item);
+  return $self->sentence_for_item($item);
 }
 
 =method sentences
@@ -85,8 +93,8 @@ This method returns a list of all sentences in the response.
 sub sentences {
   my ($self) = @_;
 
-  my @sentences = map {; $self->_jmap_response_sentence_for_item($_) }
-                  $self->_jmap_response_items;
+  my @sentences = map {; $self->sentence_for_item($_) }
+                  $self->items;
 
   return @sentences;
 }
@@ -106,18 +114,18 @@ the given name.
 sub single_sentence {
   my ($self, $name) = @_;
 
-  my @items = $self->_jmap_response_items;
+  my @items = $self->items;
   unless (@items == 1) {
-    $self->_jmap_response_abort_callback->(
+    $self->abort_callback->(
       sprintf("single_sentence called but there are %i sentences", 0+@items)
     );
   }
 
-  my $sentence = $self->_jmap_response_sentence_for_item($items[0]);
+  my $sentence = $self->sentence_for_item($items[0]);
 
   my $have = $sentence->name;
   if (defined $name && $have ne $name) {
-    $self->_jmap_response_abort_callback->(qq{single sentence has name "$have" not "$name"});
+    $self->abort_callback->(qq{single sentence has name "$have" not "$name"});
   }
 
   return $sentence;
@@ -140,11 +148,11 @@ sub sentence_named {
   my @sentences = grep {; $_->name eq $name } $self->sentences;
 
   unless (@sentences) {
-    $self->_jmap_response_abort_callback->(qq{no sentence found with name "$name"});
+    $self->abort_callback->(qq{no sentence found with name "$name"});
   }
 
   if (@sentences > 1) {
-    $self->_jmap_response_abort_callback->(qq{found more than one sentence with name "$name"});
+    $self->abort_callback->(qq{found more than one sentence with name "$name"});
   }
 
   return $sentences[0];
@@ -167,7 +175,7 @@ sub assert_n_sentences {
   my @sentences = $self->sentences;
 
   unless (@sentences == $n) {
-    $self->_jmap_response_abort_callback->("expected $n sentences but got " . @sentences)
+    $self->abort_callback->("expected $n sentences but got " . @sentences)
   }
 
   return @sentences;
@@ -185,13 +193,13 @@ of the response.
 sub paragraph {
   my ($self, $n) = @_;
 
-  $self->_jmap_response_abort_callback->("there is no paragraph for index $n")
+  $self->abort_callback->("there is no paragraph for index $n")
     unless my $indices = $self->_para_indices->[$n];
 
-  my @items    = $self->_jmap_response_items;
+  my @items    = $self->items;
   my @selected = @items[ @$indices ];
 
-  $self->_jmap_response_paragraph_for_items(\@selected);
+  $self->paragraph_for_items(\@selected);
 }
 
 =method paragraphs
@@ -206,11 +214,11 @@ sub paragraphs {
   my ($self) = @_;
 
   my @para_indices = @{ $self->_para_indices };
-  my @items        = $self->_jmap_response_items;
+  my @items        = $self->items;
 
   my @paragraphs;
   for my $i_set (@para_indices) {
-    push @paragraphs, $self->_jmap_response_paragraph_for_items(
+    push @paragraphs, $self->paragraph_for_items(
       [ @items[ @$i_set ] ]
     );
   }
@@ -234,7 +242,7 @@ sub assert_n_paragraphs {
 
   my @para_indices = @{ $self->_para_indices };
   unless ($n == @para_indices) {
-    $self->_jmap_response_abort_callback->("expected $n paragraphs but got " . @para_indices)
+    $self->abort_callback->("expected $n paragraphs but got " . @para_indices)
   }
 
   return $self->paragraphs;
@@ -254,13 +262,13 @@ sub paragraph_by_client_id {
 
   Carp::confess("no client id given") unless defined $cid;
 
-  $self->_jmap_response_abort_callback->("there is no paragraph for client_id $cid")
+  $self->abort_callback->("there is no paragraph for client_id $cid")
     unless my $indices = $self->_cid_indices->{$cid};
 
-  my @items    = $self->_jmap_response_items;
+  my @items    = $self->items;
   my @selected = @items[ @$indices ];
 
-  return $self->_jmap_response_paragraph_for_items(\@selected);
+  return $self->paragraph_for_items(\@selected);
 }
 
 =method as_struct
@@ -277,15 +285,15 @@ sub as_struct {
   my ($self) = @_;
 
   return [
-    map {; $self->_jmap_response_sentence_for_item($_)->as_struct }
-    $self->_jmap_response_items
+    map {; $self->sentence_for_item($_)->as_struct }
+    $self->items
   ];
 }
 
 sub as_stripped_struct {
   my ($self) = @_;
 
-  return $self->_jmap_response_strip_types_callback->($self->as_struct);
+  return $self->strip_json_types($self->as_struct);
 }
 
 =method as_pairs
@@ -301,15 +309,15 @@ sub as_pairs {
   my ($self) = @_;
 
   return [
-    map {; $self->_jmap_response_sentence_for_item($_)->as_pair }
-    $self->_jmap_response_items
+    map {; $self->sentence_for_item($_)->as_pair }
+    $self->items
   ];
 }
 
 sub as_stripped_pairs {
   my ($self) = @_;
 
-  return $self->_jmap_response_strip_types_callback->($self->as_pairs);
+  return $self->strip_json_types($self->as_pairs);
 }
 
 1;

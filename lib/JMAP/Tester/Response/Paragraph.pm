@@ -40,13 +40,6 @@ sub BUILD {
 
 has sentences => (is => 'bare', reader => '_sentences', required => 1);
 
-has _json_typist => (
-  is => 'ro',
-  handles => {
-    _strip_json_types => 'strip_types',
-  },
-);
-
 =method sentences
 
 The C<sentences> method returns a list of
@@ -162,7 +155,7 @@ sub as_struct {
 }
 
 sub as_stripped_struct {
-  $_[0]->_strip_json_types($_[0]->as_struct);
+  [ map {; $_->as_stripped_struct } $_[0]->sentences ]
 }
 
 =method as_pairs
@@ -177,7 +170,7 @@ sub as_pairs {
 }
 
 sub as_stripped_pairs {
-  $_[0]->_strip_json_types($_[0]->as_pairs);
+  [ map {; $_->as_stripped_pair } $_[0]->sentences ]
 }
 
 1;

@@ -162,7 +162,7 @@ sub assert_no_errors {
 
   return $self unless @errors;
 
-  $self->_jmap_response_abort_callback->({
+  $self->sentence_broker->abort_callback->({
     message     => "errors found in " . $self->name . " sentence",
     diagnostics => \@errors,
   });

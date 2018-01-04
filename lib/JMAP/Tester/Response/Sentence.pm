@@ -29,12 +29,11 @@ has name      => (is => 'ro', required => 1);
 has arguments => (is => 'ro', required => 1);
 has client_id => (is => 'ro', required => 1);
 
-has _jmap_response_abort_callback       => (is => 'ro');
-has _jmap_response_strip_types_callback => (is => 'ro');
+has sentence_broker => (is => 'ro', required => 1);
 
 sub _strip_json_types {
   my ($self, $whatever) = @_;
-  $self->_jmap_response_strip_types_callback->($whatever);
+  $self->sentence_broker->strip_json_types($whatever);
 }
 
 =method as_struct
@@ -53,7 +52,7 @@ These return a three-element arrayref.
 sub as_struct { [ $_[0]->name, $_[0]->arguments, $_[0]->client_id ] }
 
 sub as_stripped_struct {
-  $_[0]->_jmap_response_strip_types_callback->($_[0]->as_struct);
+  $_[0]->sentence_broker->strip_json_types($_[0]->as_struct);
 }
 
 =method as_pair
@@ -70,7 +69,7 @@ C<as_stripped_pair> returns the same minus JSON type information.
 sub as_pair { [ $_[0]->name, $_[0]->arguments ] }
 
 sub as_stripped_pair {
-  $_[0]->_jmap_response_strip_types_callback->($_[0]->as_pair);
+  $_[0]->sentence_broker->strip_json_types($_[0]->as_pair);
 }
 
 =method as_set
@@ -88,8 +87,7 @@ sub as_set {
     arguments    => $_[0]->arguments,
     client_id    => $_[0]->client_id,
 
-    _jmap_response_abort_callback       => $_[0]->_jmap_response_abort_callback,
-    _jmap_response_strip_types_callback => $_[0]->_jmap_response_strip_types_callback,
+    sentence_broker => $_[0]->sentence_broker,
   });
 }
 
@@ -109,7 +107,7 @@ sub assert_named {
 
   return $self if $self->name eq $name;
 
-  $self->_jmap_response_abort_callback->(
+  $self->sentence_broker->abort_callback->(
     sprintf qq{expected sentence named "%s" but got "%s"}, $name, $self->name
   );
 }
