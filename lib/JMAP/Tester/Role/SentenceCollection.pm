@@ -23,6 +23,9 @@ BEGIN {
 }
 
 requires 'items';
+requires 'add_items';
+
+after add_items => sub { $_[0]->_index_setup };
 
 sub BUILD {
   $_[0]->_index_setup;
