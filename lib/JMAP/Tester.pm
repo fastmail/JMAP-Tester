@@ -101,8 +101,6 @@ has _json_typist => (
   },
 );
 
-my $BROKER = JMAP::Tester::SentenceBroker->new;
-
 for my $type (qw(api authentication download upload)) {
   has "$type\_uri" => (
     is => 'rw',
@@ -298,7 +296,6 @@ sub request {
   return JMAP::Tester::Response->new({
     items => $data,
     http_response   => $http_res,
-    sentence_broker => $BROKER,
   });
 }
 
