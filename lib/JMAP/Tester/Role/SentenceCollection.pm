@@ -281,28 +281,6 @@ sub paragraph_by_client_id {
   return $self->paragraph_for_items(\@selected);
 }
 
-=method resolve_backref
-
-  my $value = $response->resolve_backref(\%result_reference);
-
-This takes the value of a ResultReference found in a JMAP request and expands
-it as per the JMAP RFC, "references to previous method results."
-
-=cut
-
-sub resolve_backref {
-  my ($self, $backref) = @_;
-
-  my ($sentence) = grep {; $_->name eq $backref->{name} } $self->sentences;
-
-  $self->abort_callback->("could not resolve backref") unless $sentence;
-
-  # TODO: pick out requested args with modified JSON pointer
-  my $result = do { ... };
-
-  return $result;
-}
-
 =method as_struct
 
 =method as_stripped_struct
