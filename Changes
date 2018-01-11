@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - SentenceCollection introduced to allow other implementations of
+          Response-like objects
 
 0.015     2017-10-20 15:05:13-04:00 America/New_York
         - avoid a memory cycle in the logging code
