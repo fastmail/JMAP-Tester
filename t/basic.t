@@ -60,7 +60,7 @@ subtest "the basic basics" => sub {
           { howMany => jnum(100), tastiestPieId => jstr(123) },
           jstr('a'),
         ],
-        "as_triple",
+        "as_${triple_method}",
       );
 
       my $pair_method = $pair->[0] eq 'sentence' ? 'pair' : 'pairs';

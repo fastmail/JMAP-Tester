@@ -209,7 +209,7 @@ L<JMAP::Tester::Response> objects.
 =cut
 
 sub request {
-  my ($self, $input_request, $arg) = @_;
+  my ($self, $input_request) = @_;
 
   Carp::confess("can't perform request: no api_uri configured")
     unless $self->has_api_uri;
@@ -254,6 +254,9 @@ sub request {
   }
 
   $request->{methodCalls} = \@suffixed;
+
+  $request = $request->{methodCalls}
+    if $ENV{JMAP_TESTER_NO_WRAPPER} && _ARRAY0($input_request);
 
   my $json = $self->json_encode($request);
 

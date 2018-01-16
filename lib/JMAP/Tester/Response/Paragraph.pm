@@ -145,8 +145,9 @@ sub sentence_named {
 
 =method as_stripped_triples
 
-C<as_triples> returns an arrayref containing the result of calling C<as_triples>
-on each sentence in the paragraph. C<as_stripped_triples> removes JSON types.
+C<as_triples> returns an arrayref containing the result of calling
+C<as_triple> on each sentence in the paragraph. C<as_stripped_triples> removes
+JSON types.
 
 =cut
 
