@@ -281,36 +281,37 @@ sub paragraph_by_client_id {
   return $self->paragraph_for_items(\@selected);
 }
 
-=method as_struct
+=method as_triples
 
-=method as_stripped_struct
+=method as_stripped_triples
 
 This method returns an arrayref of arrayrefs, holding the data returned by the
-JMAP server.  With C<as_struct>, some of the JSON data may be in objects provided by
-L<JSON::Typist>. If you'd prefer raw data, use the C<as_stripped_struct> form.
+JMAP server.  With C<as_triples>, some of the JSON data may be in objects
+provided by L<JSON::Typist>. If you'd prefer raw data, use the
+C<as_stripped_triples> form.
 
 =cut
 
-sub as_struct {
+sub as_triples {
   my ($self) = @_;
 
   return [
-    map {; $self->sentence_for_item($_)->as_struct }
+    map {; $self->sentence_for_item($_)->as_triple }
     $self->items
   ];
 }
 
-sub as_stripped_struct {
+sub as_stripped_triples {
   my ($self) = @_;
 
-  return $self->strip_json_types($self->as_struct);
+  return $self->strip_json_types($self->as_triples);
 }
 
 =method as_pairs
 
 =method as_stripped_pairs
 
-These methods do the same thing as C<as_struct> and <as_stripped_struct>,
+These methods do the same thing as C<as_triples> and <as_stripped_triples>,
 but omit client ids.
 
 =cut

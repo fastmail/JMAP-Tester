@@ -141,21 +141,22 @@ sub sentence_named {
   return $sentences[0];
 }
 
-=method as_struct
+=method as_triples
 
-=method as_stripped_struct
+=method as_stripped_triples
 
-C<as_struct> returns an arrayref containing the result of calling C<as_struct>
-on each sentence in the paragraph. C<as_stripped_struct> removes JSON types.
+C<as_triples> returns an arrayref containing the result of calling
+C<as_triple> on each sentence in the paragraph. C<as_stripped_triples> removes
+JSON types.
 
 =cut
 
-sub as_struct {
-  [ map {; $_->as_struct } $_[0]->sentences ]
+sub as_triples {
+  [ map {; $_->as_triple } $_[0]->sentences ]
 }
 
-sub as_stripped_struct {
-  [ map {; $_->as_stripped_struct } $_[0]->sentences ]
+sub as_stripped_triples {
+  [ map {; $_->as_stripped_triple } $_[0]->sentences ]
 }
 
 =method as_pairs

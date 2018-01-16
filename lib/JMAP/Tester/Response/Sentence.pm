@@ -36,30 +36,31 @@ sub _strip_json_types {
   $self->sentence_broker->strip_json_types($whatever);
 }
 
-=method as_struct
+=method as_triple
 
-=method as_stripped_struct
+=method as_stripped_triple
 
-C<as_struct> returns the underlying JSON data of the sentence, which may include
-objects used to convey type information for booleans, strings, and numbers.
+C<as_triple> returns the underlying JSON data of the sentence, which may
+include objects used to convey type information for booleans, strings, and
+numbers.
 
-For raw data, use C<as_stripped_struct>.
+For unblessed data, use C<as_stripped_triple>.
 
 These return a three-element arrayref.
 
 =cut
 
-sub as_struct { [ $_[0]->name, $_[0]->arguments, $_[0]->client_id ] }
+sub as_triple { [ $_[0]->name, $_[0]->arguments, $_[0]->client_id ] }
 
-sub as_stripped_struct {
-  $_[0]->sentence_broker->strip_json_types($_[0]->as_struct);
+sub as_stripped_triple {
+  $_[0]->sentence_broker->strip_json_types($_[0]->as_triple);
 }
 
 =method as_pair
 
 =method as_stripped_pair
 
-C<as_pair> returns the same thing as C<as_struct>, but without the
+C<as_pair> returns the same thing as C<as_triple>, but without the
 C<client_id>.  That means it returns a two-element arrayref.
 
 C<as_stripped_pair> returns the same minus JSON type information.
