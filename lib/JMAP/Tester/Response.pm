@@ -30,6 +30,10 @@ has items => (
   required => 1,
 );
 
+has wrapper_properties => (
+  is       => 'ro',
+);
+
 sub items { @{ $_[0]->_items } }
 
 sub add_items {
