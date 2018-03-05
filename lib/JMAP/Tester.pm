@@ -86,7 +86,7 @@ has json_codec => (
   },
   default => sub {
     require JSON;
-    return JSON->new->utf8->allow_blessed->convert_blessed;
+    return JSON->new->utf8->convert_blessed;
   },
 );
 
