@@ -24,8 +24,17 @@ has writer => (
     return JMAP::Tester::LogWriter::Code->new({ code => sub{} })
       if _SCALAR0($value) && ! defined $$value;
 
-    return JMAP::Tester::LogWriter::Filename->new({ filename_template => $value })
-      if defined $value && ! ref $value && length $value;
+    if (defined $value && ! ref $value && length $value) {
+      if ($value =~ /\A-([1-9][0-9]*)\z/) {
+        open my $handle, '>&', "$1"
+          or die "can't dup fd $1 for logger output: $!";
+        return JMAP::Tester::LogWriter::Handle->new({ handle => $handle });
+      }
+
+      return JMAP::Tester::LogWriter::Filename->new({
+        filename_template => $value
+      });
+    }
 
     return $value;
   },
