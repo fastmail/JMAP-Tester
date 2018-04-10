@@ -574,11 +574,9 @@ sub simple_auth {
 
   my $start_res = $self->ua->post(
     $self->authentication_uri,
-    [
-      'Content-Type' => 'application/json; charset=utf-8',
-      'Accept'       => 'application/json',
-      'Content'      => $start_json,
-    ],
+    'Content-Type' => 'application/json; charset=utf-8',
+    'Accept'       => 'application/json',
+    'Content'      => $start_json,
   );
 
   unless ($start_res->code == 200) {
@@ -605,11 +603,9 @@ sub simple_auth {
 
   my $next_res = $self->ua->post(
     $self->authentication_uri,
-    [
-      'Content-Type' => 'application/json; charset=utf-8',
-      'Accept'       => 'application/json',
-      'Content'      => $next_json,
-    ],
+    'Content-Type' => 'application/json; charset=utf-8',
+    'Accept'       => 'application/json',
+    'Content'      => $next_json,
   );
 
   unless ($next_res->code == 201) {
