@@ -490,7 +490,9 @@ sub download {
 
   my $get = HTTP::Request->new(
     GET => $uri,
-    $self->_maybe_auth_header,
+    [
+      $self->_maybe_auth_header,
+    ],
   );
 
   # Or our sub below leaks us
