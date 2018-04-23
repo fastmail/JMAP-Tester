@@ -374,6 +374,9 @@ sub upload {
     $$blob_ref,
   );
 
+  # Or our sub below leaks us
+  weaken $self;
+
   $self->ua->set_my_handler(request_send => sub {
     my ($req) = @_;
     $self->_logger->log_upload_request({
@@ -489,6 +492,9 @@ sub download {
     GET => $uri,
     $self->_maybe_auth_header,
   );
+
+  # Or our sub below leaks us
+  weaken $self;
 
   $self->ua->set_my_handler(request_send => sub {
     my ($req) = @_;
