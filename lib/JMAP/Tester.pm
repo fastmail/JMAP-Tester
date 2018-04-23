@@ -284,6 +284,10 @@ sub request {
 
   my $http_res = $self->ua->request($post);
 
+  # Clear our handler, or it will get called for
+  # any http request our ua makes!
+  $self->ua->set_my_handler(request_send => undef);
+
   unless ($http_res->is_success) {
     $self->_logger->log_jmap_response({
       http_response => $http_res,
@@ -386,6 +390,10 @@ sub upload {
   });
 
   my $res = $self->ua->request($post);
+
+  # Clear our handler, or it will get called for
+  # any http request our ua makes!
+  $self->ua->set_my_handler(request_send => undef);
 
   unless ($res->is_success) {
     $self->_logger->log_upload_response({
@@ -507,6 +515,10 @@ sub download {
   });
 
   my $res = $self->ua->request($get);
+
+  # Clear our handler, or it will get called for
+  # any http request our ua makes!
+  $self->ua->set_my_handler(request_send => undef);
 
   $self->_logger->log_download_response({
     http_response => $res,
