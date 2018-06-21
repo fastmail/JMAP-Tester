@@ -14,6 +14,9 @@ use namespace::clean;
 This is what you get when you download!  It's got an C<is_success> method.  It
 returns true.
 
+It also has a C<bytes_ref> method which will return a reference to the
+raw bytes of the download.
+
 =cut
 
 sub is_success { 1 }
@@ -23,7 +26,7 @@ has bytes_ref => (
   lazy => 1,
   default => sub {
     my $str = $_[0]->http_response->decoded_content(charset => 'none');
-    return $str;
+    return \$str;
   },
 );
 
