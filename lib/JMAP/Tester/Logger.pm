@@ -28,6 +28,7 @@ has writer => (
       if ($value =~ /\A-([1-9][0-9]*)\z/) {
         open my $handle, '>&', "$1"
           or die "can't dup fd $1 for logger output: $!";
+        $handle->autoflush(1);
         return JMAP::Tester::LogWriter::Handle->new({ handle => $handle });
       }
 
