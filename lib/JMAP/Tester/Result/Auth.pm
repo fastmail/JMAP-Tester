@@ -12,7 +12,11 @@ use namespace::clean;
 =head1 OVERVIEW
 
 This is what you get when you authenticate!  It's got an C<is_success> method.
-It returns true.
+It returns true. It also has:
+
+=method client_session
+
+The client session struct
 
 =cut
 

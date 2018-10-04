@@ -15,7 +15,11 @@ This is the sort of worthless object you get back when your JMAP request fails.
 This class should be replaced, in most cases, by more useful classes in the
 future.
 
-It's got an C<is_success> method.  It returns false.
+It's got an C<is_success> method.  It returns false. It also has:
+
+=method ident
+
+An error identifier. May or may not be defined.
 
 =cut
 
