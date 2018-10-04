@@ -12,7 +12,11 @@ use namespace::clean;
 =head1 OVERVIEW
 
 This is what you get when you download!  It's got an C<is_success> method.  It
-returns true.
+returns true. It also has:
+
+=method bytes_ref
+
+The raw bytes of the blob.
 
 =cut
 
