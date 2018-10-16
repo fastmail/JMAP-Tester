@@ -5,7 +5,7 @@ package JMAP::Tester::Result::Logout;
 # ABSTRACT: a successful logout
 
 use Moo;
-with 'JMAP::Tester::Role::Result';
+with 'JMAP::Tester::Role::HTTPResult';
 
 use namespace::clean;
 

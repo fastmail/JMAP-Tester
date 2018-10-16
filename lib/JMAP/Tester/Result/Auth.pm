@@ -5,7 +5,7 @@ package JMAP::Tester::Result::Auth;
 # ABSTRACT: what you get when you authenticate
 
 use Moo;
-with 'JMAP::Tester::Role::Result';
+with 'JMAP::Tester::Role::HTTPResult';
 
 use namespace::clean;
 

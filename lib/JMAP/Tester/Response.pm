@@ -4,7 +4,7 @@ package JMAP::Tester::Response;
 # ABSTRACT: what you get in reply to a succesful JMAP request
 
 use Moo;
-with 'JMAP::Tester::Role::SentenceCollection', 'JMAP::Tester::Role::Result';
+with 'JMAP::Tester::Role::SentenceCollection', 'JMAP::Tester::Role::HTTPResult';
 
 use JMAP::Tester::Response::Sentence;
 use JMAP::Tester::Response::Paragraph;

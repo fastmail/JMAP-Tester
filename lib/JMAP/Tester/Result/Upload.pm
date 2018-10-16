@@ -5,7 +5,7 @@ package JMAP::Tester::Result::Upload;
 # ABSTRACT: what you get when you upload a blob
 
 use Moo;
-with 'JMAP::Tester::Role::Result';
+with 'JMAP::Tester::Role::HTTPResult';
 
 use namespace::clean;
 

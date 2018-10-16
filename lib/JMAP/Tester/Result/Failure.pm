@@ -5,7 +5,7 @@ package JMAP::Tester::Result::Failure;
 # ABSTRACT: what you get when your JMAP request utterly fails
 
 use Moo;
-with 'JMAP::Tester::Role::Result';
+with 'JMAP::Tester::Role::HTTPResult';
 
 use namespace::clean;
 

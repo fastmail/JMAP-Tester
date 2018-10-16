@@ -5,7 +5,7 @@ package JMAP::Tester::Result::Download;
 # ABSTRACT: what you get when you download a blob
 
 use Moo;
-with 'JMAP::Tester::Role::Result';
+with 'JMAP::Tester::Role::HTTPResult';
 
 use namespace::clean;
 
