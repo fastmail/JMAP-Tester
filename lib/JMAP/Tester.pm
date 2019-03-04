@@ -271,7 +271,7 @@ sub request {
   $request = $request->{methodCalls}
     if $ENV{JMAP_TESTER_NO_WRAPPER} && _ARRAY0($input_request);
 
-  if ($self->_has_default_using) {
+  if ($self->_has_default_using && ! exists $request->{using}) {
     $request->{using} = $self->default_using;
   }
 
