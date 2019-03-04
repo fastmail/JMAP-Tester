@@ -2,6 +2,9 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.024     2019-03-04 16:03:30-05:00 America/New_York
+        - add account and primary account accounting
+
 0.023     2019-03-04 14:51:46-05:00 America/New_York
         - add default_using attribute, because using is what we're all using
           now
