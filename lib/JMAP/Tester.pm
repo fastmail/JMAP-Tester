@@ -259,6 +259,9 @@ at least, failures are L<JMAP::Tester::Result::Failure> objects.  More refined
 failure objects may exist in the future.  Successful requests return
 L<JMAP::Tester::Response> objects.
 
+Before the JMAP request is made, each triple is passed to a method called
+C<munge_method_triple>, which can tweak the method however it likes.
+
 =cut
 
 sub request {
@@ -302,6 +305,11 @@ sub request {
     }
 
     $copy->[1] = \%arg;
+
+    # Originally, I had a second argument, \%stash, which was the same for the
+    # whole ->request, so you could store data between munges.  Removed, for
+    # now, as YAGNI. -- rjbs, 2019-03-04
+    $self->munge_method_triple($copy);
 
     push @suffixed, $copy;
   }
@@ -357,6 +365,8 @@ sub request {
 
   return $self->_jresponse_from_hresponse($http_res);
 }
+
+sub munge_method_triple {}
 
 sub _jresponse_from_hresponse {
   my ($self, $http_res) = @_;
@@ -791,8 +801,8 @@ sub configure_from_client_session {
     }
   }
 
-  $self->primary_accounts($client_session->{primaryAccounts});
-  $self->accounts($client_session->{accounts});
+  $self->_primary_accounts($client_session->{primaryAccounts});
+  $self->_accounts($client_session->{accounts});
 
   return;
 }
