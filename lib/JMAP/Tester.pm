@@ -151,6 +151,19 @@ sub _set_cookie {
   );
 }
 
+=attr default_using
+
+This is an arrayref of strings that specify which capabilities the client
+wishes to use. (See L<https://jmap.io/spec-core.html#the-request-object>
+for more info). By default, JMAP::Tester will not send a 'using' parameter.
+
+=cut
+
+has default_using => (
+  is => 'rw',
+  predicate => '_has_default_using',
+);
+
 =attr default_arguments
 
 This is a hashref of arguments to be put into each method call.  It's
@@ -257,6 +270,10 @@ sub request {
 
   $request = $request->{methodCalls}
     if $ENV{JMAP_TESTER_NO_WRAPPER} && _ARRAY0($input_request);
+
+  if ($self->_has_default_using) {
+    $request->{using} = $self->default_using;
+  }
 
   my $json = $self->json_encode($request);
 
