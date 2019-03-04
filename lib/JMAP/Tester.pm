@@ -193,6 +193,46 @@ has default_arguments => (
   default => sub {  {}  },
 );
 
+=attr accounts
+
+This is an arrayref of accounts, provided by the client session object.  This
+method will return a list when accounts have been configured.
+
+=cut
+
+has _accounts => (
+  is        => 'rw',
+  init_arg  => undef,
+  predicate => '_has_accounts',
+);
+
+sub accounts {
+  return unless $_[0]->_has_accounts;
+  return @{ $_[0]->_accounts }
+}
+
+=method primary_account_for
+
+  my $account_id = $tester->primary_account_for($using);
+
+This returns the primary accountId to be used for the given capability, or
+undef if none is available.  This is only useful if the tester has been
+configured from a client session.
+
+=cut
+
+has _primary_accounts => (
+  is        => 'rw',
+  init_arg  => undef,
+  predicate => '_has_primary_accounts',
+);
+
+sub primary_account_for {
+  my ($self, $using) = @_;
+  return unless $self->_has_primary_accounts;
+  return $self->_primary_accounts->{ $using };
+}
+
 =method request
 
   my $result = $jtest->request([
@@ -750,6 +790,9 @@ sub configure_from_client_session {
       $self->$clearer;
     }
   }
+
+  $self->primary_accounts($client_session->{primaryAccounts});
+  $self->accounts($client_session->{accounts});
 
   return;
 }
