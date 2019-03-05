@@ -419,9 +419,15 @@ has _logger => (
 
 =method upload
 
-  my $result = $tester->upload($mime_type, $blob_ref, \%arg);
+  my $result = $tester->upload(\%arg);
 
-This uploads the given blob, which should be given as a reference to a string.
+Required arguments are:
+
+  accountId - the account for which we're uploading (no default)
+  type      - the content-type we want to provide to the server
+  blob      - the data to upload. Must be a reference to a string
+
+This uploads the given blob.
 
 The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
@@ -430,19 +436,32 @@ result|JMAP::Tester::Result::Upload>.
 =cut
 
 sub upload {
-  my ($self, $mime_type, $blob_ref) = @_;
+  my ($self, $arg) = @_;
   # TODO: support blob as handle or sub -- rjbs, 2016-11-17
 
+  my $uri = $self->upload_uri;
+
   Carp::confess("can't upload without upload_uri")
-    unless $self->upload_uri;
+    unless $uri;
+
+  for my $param (qw(accountId type blob)) {
+    my $value = $arg->{ $param };
+
+    Carp::confess("missing required parameter $param")
+      unless defined $value;
+
+    if ($param eq 'accountId') {
+      $uri =~ s/\{$param\}/$value/g;
+    }
+  }
 
   my $post = HTTP::Request->new(
-    POST => $self->upload_uri,
+    POST => $uri,
     [
-      'Content-Type' => $mime_type,
+      'Content-Type' => $arg->{type},
       $self->_maybe_auth_header,
     ],
-    $$blob_ref,
+    ${ $arg->{blob} },
   );
 
   # Or our sub below leaks us
