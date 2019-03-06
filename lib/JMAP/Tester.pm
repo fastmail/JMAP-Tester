@@ -195,8 +195,8 @@ has default_arguments => (
 
 =attr accounts
 
-This is an arrayref of accounts, provided by the client session object.  This
-method will return a list when accounts have been configured.
+This method will return a list of pairs mapping accountIds to accounts
+as provided by the client session object if any have been configured.
 
 =cut
 
@@ -208,7 +208,7 @@ has _accounts => (
 
 sub accounts {
   return unless $_[0]->_has_accounts;
-  return @{ $_[0]->_accounts }
+  return %{ $_[0]->_accounts }
 }
 
 =method primary_account_for
