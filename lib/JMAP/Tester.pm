@@ -22,7 +22,6 @@ use Module::Runtime ();
 use Params::Util qw(_HASH0 _ARRAY0);
 use URI;
 use URI::QueryParam;
-use Scalar::Util qw(weaken);
 use URI::Escape qw(uri_escape);
 
 use namespace::clean;
@@ -334,12 +333,11 @@ sub request {
     $json,
   );
 
-  # Or our sub below leaks us
-  weaken $self;
+  my $logger = $self->_logger;
 
   $self->ua->set_my_handler(request_send => sub {
     my ($req) = @_;
-    $self->_logger->log_jmap_request({
+    $logger->log_jmap_request({
       jmap_array   => \@suffixed,
       json         => $json,
       http_request => $req,
@@ -354,7 +352,7 @@ sub request {
   $self->ua->set_my_handler(request_send => undef);
 
   unless ($http_res->is_success) {
-    $self->_logger->log_jmap_response({
+    $logger->log_jmap_response({
       http_response => $http_res,
     });
 
@@ -464,12 +462,11 @@ sub upload {
     ${ $arg->{blob} },
   );
 
-  # Or our sub below leaks us
-  weaken $self;
+  my $logger = $self->_logger;
 
   $self->ua->set_my_handler(request_send => sub {
     my ($req) = @_;
-    $self->_logger->log_upload_request({
+    $logger->log_upload_request({
       http_request => $req,
     });
     return;
@@ -482,7 +479,7 @@ sub upload {
   $self->ua->set_my_handler(request_send => undef);
 
   unless ($res->is_success) {
-    $self->_logger->log_upload_response({
+    $logger->log_upload_response({
       http_response => $res,
     });
 
@@ -494,7 +491,7 @@ sub upload {
   my $json = $res->decoded_content;
   my $blob = $self->apply_json_types( $self->json_decode( $json ) );
 
-  $self->_logger->log_upload_response({
+  $logger->log_upload_response({
     json          => $json,
     blob_struct   => $blob,
     http_response => $res,
@@ -591,12 +588,11 @@ sub download {
     ],
   );
 
-  # Or our sub below leaks us
-  weaken $self;
+  my $logger = $self->_logger;
 
   $self->ua->set_my_handler(request_send => sub {
     my ($req) = @_;
-    $self->_logger->log_download_request({
+    $logger->log_download_request({
       http_request => $req,
     });
     return;
@@ -608,7 +604,7 @@ sub download {
   # any http request our ua makes!
   $self->ua->set_my_handler(request_send => undef);
 
-  $self->_logger->log_download_response({
+  $logger->log_download_response({
     http_response => $res,
   });
 
