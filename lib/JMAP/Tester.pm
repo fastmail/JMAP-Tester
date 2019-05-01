@@ -84,6 +84,23 @@ has return_futures => (
   default => 0,
 );
 
+# When something doesn't work — not an individual method call, but the whole
+# HTTP call, somehow — then the future will fail, and the failure might be a
+# JMAP tester failure object, meaning we semi-expected it, or it might be some
+# other crazy failure, meaning we had no way of seeing it coming.
+#
+# We use Future->fail because that way we can use ->else in chains to only act
+# on successful HTTP calls. At the end, it's fine if you're expecting a future
+# and can know that a failed future is a fail and a done future is okay. In the
+# old calling convention, though, you expect to get a success/fail object no
+# matter what, and unexpected behavior is fatal.
+#
+# $Failsafe emulates that. Just before we return from a future-returning
+# method, and if the client is not set to return futures, we do this:
+#
+# * successful futures return their payload, the Result object
+# * failed futures that contain a JMAP tester Failure return the failure
+# * other failed futures die, like they would if you called $failed_future->get
 my $Failsafe = sub {
   $_[0]->else_with_f(sub {
     my ($f, $fail) = @_;
