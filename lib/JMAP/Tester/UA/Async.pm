@@ -37,8 +37,30 @@ sub set_cookie {
   );
 }
 
+has _default_headers => (
+  is => 'ro',
+  default => sub {  {}  },
+);
+
+sub set_default_header {
+  my ($self, $name, $value) = @_;
+
+  if (defined $value) {
+    $self->_default_headers->{$name} = $value;
+  } else {
+    delete $self->_default_headers->{$name};
+  }
+
+  return;
+}
+
 sub request {
   my ($self, $tester, $req, $log_type, $log_extra) = @_;
+
+  my $dh = $self->_default_headers;
+  for my $h (keys %$dh) {
+    $req->header($h => $dh->{$h}) unless defined $req->header($h);
+  }
 
   my $logger = $tester->_logger;
 

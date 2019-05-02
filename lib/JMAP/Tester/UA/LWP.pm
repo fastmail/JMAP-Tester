@@ -50,6 +50,12 @@ sub set_cookie {
   );
 }
 
+sub set_default_header {
+  my ($self, $name, $value) = @_;
+
+  $self->lwp->default_header($name, $value);
+}
+
 sub request {
   my ($self, $tester, $req, $log_type, $log_extra) = @_;
 

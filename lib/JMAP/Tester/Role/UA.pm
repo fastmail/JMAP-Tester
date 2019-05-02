@@ -11,5 +11,8 @@ requires qw( request );
 # Is this a terrible idea?
 requires qw( set_cookie );
 
+# Is this also a terrible idea?
+requires qw( set_default_header );
+
 no Moo::Role;
 1;
