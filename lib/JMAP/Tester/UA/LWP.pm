@@ -59,17 +59,20 @@ sub set_default_header {
 sub request {
   my ($self, $tester, $req, $log_type, $log_extra) = @_;
 
+  Carp::cluck("something very strange happened") unless $tester->can('_logger');
   my $logger = $tester->_logger;
 
   my $log_method = "log_" . ($log_type // 'jmap') . '_request';
-  $self->lwp->set_my_handler(request_send => sub {
-    my ($req) = @_;
-    $logger->$log_method({
-      ($log_extra ? %$log_extra : ()),
-      http_request => $req,
+  if ($logger->can($log_method)) {
+    $self->lwp->set_my_handler(request_send => sub {
+      my ($req) = @_;
+      $logger->$log_method({
+        ($log_extra ? %$log_extra : ()),
+        http_request => $req,
+      });
+      return;
     });
-    return;
-  });
+  }
 
   my $http_res = $self->lwp->request($req);
 
