@@ -82,13 +82,21 @@ method responses.
 =cut
 
 sub as_set {
+  my ($self) = @_;
+
+  unless ($self->name =~ m{/set$}) {
+    return $self->sentence_broker->abort_callback->(
+      sprintf(qq{tried to call ->as_set on sentence named "%s"}, $self->name)
+    );
+  }
+
   require JMAP::Tester::Response::Sentence::Set;
   return JMAP::Tester::Response::Sentence::Set->new({
-    name         => $_[0]->name,
-    arguments    => $_[0]->arguments,
-    client_id    => $_[0]->client_id,
+    name         => $self->name,
+    arguments    => $self->arguments,
+    client_id    => $self->client_id,
 
-    sentence_broker => $_[0]->sentence_broker,
+    sentence_broker => $self->sentence_broker,
   });
 }
 

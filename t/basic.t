@@ -273,6 +273,24 @@ subtest "set sentence assert_no_errors" => sub {
   like($diags[1]->message, qr/notUpdated/, "...one about destroys");
 };
 
+subtest "calling as_set on non-set sentence" => sub {
+  my $res = JMAP::Tester::Response->new({
+    sentence_broker => $broker,
+    items => [[
+      error => {
+        type => 'internal',
+        description => 'allergic to cherries',
+      }, 'a',
+    ]],
+  });
+
+  aborts_ok(
+    sub { $res->single_sentence->as_set },
+    re(qr{\Qtried to call ->as_set on sentence named "error"\E}),
+    "we cannot call ->as_set on a non-set sentence",
+  );
+};
+
 subtest "miscellaneous error conditions" => sub {
   my $res_1 = JMAP::Tester::Response->new({
     sentence_broker => $broker,
