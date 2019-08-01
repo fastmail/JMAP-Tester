@@ -163,11 +163,11 @@ subtest "old style updated" => sub {
     my $res = JMAP::Tester::Response->new({
       sentence_broker => $broker,
       items => [
-        [ piecesSet => { updated => $kinds{$kind} }, 'a' ]
+        [ 'Piece/set' => { updated => $kinds{$kind} }, 'a' ]
       ],
     });
 
-    my $s = $res->single_sentence('piecesSet')->as_set;
+    my $s = $res->single_sentence('Piece/set')->as_set;
 
     is_deeply(
       [ sort $s->updated_ids ],
@@ -214,7 +214,7 @@ subtest "set assert_named" => sub {
     sentence_broker => $broker,
     items => [
       [
-        piecesSet => {
+        'Piece/set' => {
           updated    => { foo => undef },
           notUpdated => { fail => { type => jstr("internalJoke") } },
           notDestroyed => { tick => { type => jstr("nighInvulnerabile") } },
@@ -224,12 +224,12 @@ subtest "set assert_named" => sub {
     ],
   });
 
-  my $s = $res->single_sentence('piecesSet')->as_set;
+  my $s = $res->single_sentence('Piece/set')->as_set;
 
-  ok($res->sentence(0)->assert_named('piecesSet'), "assert_named (Set)");
+  ok($res->sentence(0)->assert_named('Piece/set'), "assert_named (Set)");
   aborts_ok(
     sub { $res->sentence(0)->assert_named("setPieces") },
-    re('expected sentence named "setPieces" but got "piecesSet"'),
+    re('expected sentence named "setPieces" but got "Piece/set"'),
     "assert_named aborts when it should",
   );
 };
@@ -241,7 +241,7 @@ subtest "set sentence assert_no_errors" => sub {
         sentence_broker => $broker,
         items => [
           [
-            piecesSet => {
+            'Piece/set' => {
               updated    => { foo => undef },
               notUpdated => { fail => { type => jstr("internalJoke") } },
               notDestroyed => { tick => { type => jstr("nighInvulnerabile") } },
@@ -251,7 +251,7 @@ subtest "set sentence assert_no_errors" => sub {
         ],
       });
 
-      my $s = $res->single_sentence('piecesSet')->as_set;
+      my $s = $res->single_sentence('Piece/set')->as_set;
 
       $s->assert_no_errors;
 
