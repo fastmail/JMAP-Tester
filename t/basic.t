@@ -18,11 +18,8 @@ use Test::Abortable 'subtest';
 # require mocking up a remote end.  Until we're up for doing that, this is
 # simpler for testing. -- rjbs, 2016-12-15
 
-my $broker = JMAP::Tester::SentenceBroker->new;
-
 subtest "the basic basics" => sub {
   my $res = JMAP::Tester::Response->new({
-    sentence_broker => $broker,
     items => [
       [ jstr('atePies'),
         { howMany => jnum(100), tastiestPieId => jstr(123) },
@@ -161,7 +158,6 @@ subtest "old style updated" => sub {
 
   for my $kind (sort keys %kinds) {
     my $res = JMAP::Tester::Response->new({
-      sentence_broker => $broker,
       items => [
         [ 'Piece/set' => { updated => $kinds{$kind} }, 'a' ]
       ],
@@ -187,7 +183,6 @@ subtest "basic abort" => sub {
   my $events = Test2::API::intercept(sub {
     subtest "this will abort" => sub {
       my $res = JMAP::Tester::Response->new({
-        sentence_broker => $broker,
         items => [
           [ atePies => { howMany => jnum(100), tastiestPieId => jstr(123) }, 'a' ],
         ],
@@ -211,7 +206,6 @@ subtest "basic abort" => sub {
 
 subtest "set assert_named" => sub {
   my $res = JMAP::Tester::Response->new({
-    sentence_broker => $broker,
     items => [
       [
         'Piece/set' => {
@@ -238,7 +232,6 @@ subtest "set sentence assert_no_errors" => sub {
   my $events = Test2::API::intercept(sub {
     subtest "this will abort" => sub {
       my $res = JMAP::Tester::Response->new({
-        sentence_broker => $broker,
         items => [
           [
             'Piece/set' => {
@@ -275,7 +268,6 @@ subtest "set sentence assert_no_errors" => sub {
 
 subtest "calling as_set on non-set sentence" => sub {
   my $res = JMAP::Tester::Response->new({
-    sentence_broker => $broker,
     items => [[
       error => {
         type => 'internal',
@@ -293,14 +285,12 @@ subtest "calling as_set on non-set sentence" => sub {
 
 subtest "miscellaneous error conditions" => sub {
   my $res_1 = JMAP::Tester::Response->new({
-    sentence_broker => $broker,
     items => [
       [ welcome => { all => jstr('refugees') }, jstr('xyzzy') ],
     ],
   });
 
   my $res_2 = JMAP::Tester::Response->new({
-    sentence_broker => $broker,
     items => [
       [ welcome => { all  => jstr('refugees') }, jstr('xyzzy') ],
       [ goodBye => { blue => jstr('skye') }, jstr('a') ],
@@ -342,7 +332,6 @@ subtest "miscellaneous error conditions" => sub {
   }
 
   my $res_3 = JMAP::Tester::Response->new({
-    sentence_broker => $broker,
     items => [
       [ welcome => { all => jstr('refugees') }, jstr('xyzzy') ],
       [ welcome => { all => jstr('homeless') }, jstr('xyzzy') ],
