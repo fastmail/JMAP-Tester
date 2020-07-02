@@ -128,10 +128,14 @@ has json_codec => (
   },
 );
 
+has use_json_typist => (
+  is => 'ro',
+  default => 1,
+);
+
 has _json_typist => (
   is => 'ro',
   handles => {
-    apply_json_types => 'apply_types',
     strip_json_types => 'strip_types',
   },
   default => sub {
@@ -139,6 +143,13 @@ has _json_typist => (
     return JSON::Typist->new;
   },
 );
+
+sub apply_json_types {
+  my ($self, $data) = @_;
+
+  return $data unless $self->use_json_typist;
+  return $self->_json_typist->apply_types($data);
+}
 
 for my $type (qw(api authentication download upload)) {
   has "$type\_uri" => (
