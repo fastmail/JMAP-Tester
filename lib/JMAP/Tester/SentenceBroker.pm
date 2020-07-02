@@ -41,6 +41,12 @@ sub paragraph_for_items {
 sub abort {
   my ($self, $string, $diagnostics) = @_;
 
+  unless ($diagnostics) {
+    # We should decide what should be passed in, if anything.  Probably
+    # something, right?
+    $diagnostics = $self->response->generate_diagnostics();
+  }
+
   die JMAP::Tester::Abort->new({
     message => $string,
     ($diagnostics ? (diagnostics => $diagnostics) : ()),

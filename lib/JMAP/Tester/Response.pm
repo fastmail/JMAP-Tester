@@ -40,6 +40,23 @@ sub add_items {
   $_[0]->sentence_broker->abort("can't add items to " . __PACKAGE__);
 }
 
+my $DEFAULT_DIAG_GENERATOR = sub {
+  require JSON::MaybeXS;
+  state $json = JSON::MaybeXS->new->utf8->convert_blessed->pretty->canonical;
+  return [ "Response sentences: " . $json->encode([ $_[0]->items ]) ];
+};
+
+has _diagnostics_generator => (
+  is => 'ro',
+  default   => sub { $DEFAULT_DIAG_GENERATOR },
+  init_arg  => 'diagnostics_generator',
+);
+
+sub generate_diagnostics {
+  my ($self) = @_;
+  $self->_diagnostics_generator->($self);
+}
+
 sub sentence_broker;
 has sentence_broker => (
   is    => 'ro',
