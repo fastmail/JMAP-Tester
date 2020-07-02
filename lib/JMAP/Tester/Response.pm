@@ -40,21 +40,21 @@ sub add_items {
   $_[0]->sentence_broker->abort("can't add items to " . __PACKAGE__);
 }
 
-my $DEFAULT_DIAG_GENERATOR = sub {
+my $DEFAULT_DIAG_DUMPER = sub {
   require JSON::MaybeXS;
   state $json = JSON::MaybeXS->new->utf8->convert_blessed->pretty->canonical;
-  return [ "Response sentences: " . $json->encode([ $_[0]->items ]) ];
+  return $json->encode($_[0]);
 };
 
-has _diagnostics_generator => (
+has _diagnostic_dumper => (
   is => 'ro',
-  default   => sub { $DEFAULT_DIAG_GENERATOR },
-  init_arg  => 'diagnostics_generator',
+  default   => sub { $DEFAULT_DIAG_DUMPER },
+  init_arg  => 'diagnostic_dumper',
 );
 
-sub generate_diagnostics {
-  my ($self) = @_;
-  $self->_diagnostics_generator->($self);
+sub dump_diagnostic {
+  my ($self, $value) = @_;
+  $self->_diagnostic_dumper->($value);
 }
 
 sub sentence_broker;
