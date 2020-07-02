@@ -40,8 +40,15 @@ sub add_items {
   $_[0]->sentence_broker->abort_callback->("can't add items to " . __PACKAGE__);
 }
 
-sub sentence_broker {
-  state $BROKER = JMAP::Tester::SentenceBroker->new;
-}
+sub sentence_broker;
+has sentence_broker => (
+  is    => 'ro',
+  lazy  => 1,
+  init_arg => undef,
+  default  => sub {
+    my ($self) = @_;
+    JMAP::Tester::SentenceBroker->new({ response => $self });
+  },
+);
 
 1;

@@ -8,6 +8,12 @@ use JMAP::Tester::Abort 'abort';
 use JMAP::Tester::Response::Sentence;
 use JMAP::Tester::Response::Paragraph;
 
+has response => (
+  is => 'ro',
+  weak_ref => 1,
+  required => 1,
+);
+
 sub client_ids_for_items {
   map {; $_->[2] } @{ $_[1] }
 }
