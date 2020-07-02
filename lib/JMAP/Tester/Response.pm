@@ -37,7 +37,7 @@ has wrapper_properties => (
 sub items { @{ $_[0]->_items } }
 
 sub add_items {
-  $_[0]->sentence_broker->abort_callback->("can't add items to " . __PACKAGE__);
+  $_[0]->sentence_broker->abort("can't add items to " . __PACKAGE__);
 }
 
 sub sentence_broker;

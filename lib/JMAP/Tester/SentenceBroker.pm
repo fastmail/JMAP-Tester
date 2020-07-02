@@ -4,7 +4,7 @@ package JMAP::Tester::SentenceBroker;
 use Moo;
 with 'JMAP::Tester::Role::SentenceBroker';
 
-use JMAP::Tester::Abort 'abort';
+use JMAP::Tester::Abort;
 use JMAP::Tester::Response::Sentence;
 use JMAP::Tester::Response::Paragraph;
 
@@ -38,7 +38,14 @@ sub paragraph_for_items {
   });
 }
 
-sub abort_callback { \&abort }
+sub abort {
+  my ($self, $string, $diagnostics) = @_;
+
+  die JMAP::Tester::Abort->new({
+    message => $string,
+    ($diagnostics ? (diagnostics => $diagnostics) : ()),
+  });
+}
 
 sub strip_json_types {
   state $typist = JSON::Typist->new;
