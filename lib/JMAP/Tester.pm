@@ -366,6 +366,8 @@ sub request {
 
 sub munge_method_triple {}
 
+sub response_class { 'JMAP::Tester::Response' }
+
 sub _jresponse_from_hresponse {
   my ($self, $http_res) = @_;
 
@@ -391,7 +393,7 @@ sub _jresponse_from_hresponse {
     http_response => $http_res,
   });
 
-  return JMAP::Tester::Response->new({
+  return $self->response_class->new({
     items => $items,
     http_response       => $http_res,
     wrapper_properties  => $props,
