@@ -40,15 +40,19 @@ sub add_items {
   $_[0]->sentence_broker->abort("can't add items to " . __PACKAGE__);
 }
 
-my $DEFAULT_DIAG_DUMPER = sub {
-  require JSON::MaybeXS;
-  state $json = JSON::MaybeXS->new->utf8->convert_blessed->pretty->canonical;
-  return $json->encode($_[0]);
-};
+sub default_diagnostic_dumper {
+  state $default = do {
+    require JSON::MaybeXS;
+    state $json = JSON::MaybeXS->new->utf8->convert_blessed->pretty->canonical;
+    sub { $json->encode($_[0]); }
+  };
+
+  return $default;
+}
 
 has _diagnostic_dumper => (
   is => 'ro',
-  default   => sub { $DEFAULT_DIAG_DUMPER },
+  builder   => 'default_diagnostic_dumper',
   init_arg  => 'diagnostic_dumper',
 );
 
