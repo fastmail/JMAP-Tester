@@ -66,16 +66,22 @@ sub request {
 
   my $log_method = "log_" . ($log_type // 'jmap') . '_request';
 
-#  $self->ua->set_my_handler(request_send => sub {
-#    my ($req) = @_;
-#    $logger->$log_method({
-#      ($log_extra ? %$log_extra : ()),
-#      http_request => $req,
-#    });
-#    return;
-#  });
+  return $self->client->do_request(
+    request => $req,
+    on_ready => sub {
+      # This fires just before the request is written to the socket, just
+      # like how LWP::UserAgent logs the request before actually sending
+      # it
+      my $log_method = "log_" . ($log_type // 'jmap') . '_request';
 
-  return $self->client->do_request(request => $req);
+      $tester->_logger->$log_method({
+        ($log_extra ? %$log_extra : ()),
+        http_request => $req,
+      });
+
+      return Future->done;
+    },
+  );
 }
 
 no Moo;
