@@ -37,6 +37,11 @@ sub set_cookie {
   );
 }
 
+sub scan_cookies {
+  my ($self, $callback) = @_;
+  return $self->client->cookie_jar->scan($callback);
+}
+
 has _default_headers => (
   is => 'ro',
   default => sub {  {}  },

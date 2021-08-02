@@ -50,6 +50,11 @@ sub set_cookie {
   );
 }
 
+sub scan_cookies {
+  my ($self, $callback) = @_;
+  return $self->lwp->cookie_jar->scan($callback);
+}
+
 sub set_default_header {
   my ($self, $name, $value) = @_;
 

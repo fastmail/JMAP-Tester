@@ -10,6 +10,7 @@ requires qw( request );
 
 # Is this a terrible idea?
 requires qw( set_cookie );
+requires qw( scan_cookies );
 
 # Is this also a terrible idea?
 requires qw( set_default_header );
