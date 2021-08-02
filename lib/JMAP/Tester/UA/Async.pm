@@ -8,7 +8,7 @@ with 'JMAP::Tester::Role::UA';
 
 use Future;
 
-has client => (
+has http_client => (
   is   => 'ro',
   required => 1,
 );
@@ -22,7 +22,7 @@ sub set_cookie {
 
   my $uri = URI->new($arg->{api_uri});
 
-  $self->client->cookie_jar->set_cookie(
+  $self->http_client->cookie_jar->set_cookie(
     1,
     $arg->{name},
     $arg->{value},
@@ -39,7 +39,7 @@ sub set_cookie {
 
 sub scan_cookies {
   my ($self, $callback) = @_;
-  return $self->client->cookie_jar->scan($callback);
+  return $self->http_client->cookie_jar->scan($callback);
 }
 
 has _default_headers => (
@@ -71,7 +71,7 @@ sub request {
 
   my $log_method = "log_" . ($log_type // 'jmap') . '_request';
 
-  return $self->client->do_request(
+  return $self->http_client->do_request(
     request => $req,
     on_ready => sub {
       # This fires just before the request is written to the socket, just
