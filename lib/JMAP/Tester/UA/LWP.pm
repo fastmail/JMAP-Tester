@@ -6,6 +6,7 @@ package JMAP::Tester::UA::LWP;
 use Moo;
 with 'JMAP::Tester::Role::UA';
 
+use Carp ();
 use Future;
 
 has lwp => (
