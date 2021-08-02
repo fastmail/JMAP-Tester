@@ -876,4 +876,65 @@ sub logout {
   return $self->return_futures ? $future : $future->$Failsafe->get;
 }
 
+=method http_request
+
+  my $response = $jtest->http_request($http_request);
+
+Sometimes, you may need to make an HTTP request with your existing web
+connection.  This might be to interact with a custom authentication mechanism,
+to access custom endpoints, or just to make very, very specifically crafted
+requests.  For this reasons, C<http_request> exists.
+
+This returns either an HTTP::Response or a Future that will complete to one.
+
+=cut
+
+sub http_request {
+  my ($self, $http_request) = @_;
+
+  my $future = $self->ua->request($self, $http_request, 'misc');
+  return $self->return_futures ? $future : $future->$Failsafe->get;
+}
+
+=method http_get
+
+  my $response = $jtest->http_get($url, $headers);
+
+This method is just sugar for calling C<http_request> to make a GET request for
+the given URL.  C<$headers> is an optional arrayref of headers.
+
+=cut
+
+sub http_get {
+  my ($self, $url, $headers) = @_;
+
+  my $req = HTTP::Request->new(
+    GET => $url,
+    (defined $headers ? $headers : ()),
+  );
+  return $self->http_request($req);
+}
+
+=method http_post
+
+  my $response = $jtest->http_post($url, $body, $headers);
+
+This method is just sugar for calling C<http_request> to make a POST request
+for the given URL.  C<$headers> is an arrayref of headers and C<$body> is the
+byte string to be passed as the body.
+
+=cut
+
+sub http_post {
+  my ($self, $url, $body, $headers) = @_;
+
+  my $req = HTTP::Request->new(
+    POST => $url,
+    $headers // [],
+    $body,
+  );
+
+  return $self->http_request($req);
+}
+
 1;
