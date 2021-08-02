@@ -54,6 +54,7 @@ sub set_default_header {
   my ($self, $name, $value) = @_;
 
   $self->lwp->default_header($name, $value);
+  return;
 }
 
 sub request {
