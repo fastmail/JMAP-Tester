@@ -79,7 +79,14 @@ There is also L<JMAP::Tester::Response/"as_stripped_pairs">.
 
 =cut
 
-has return_futures => (
+=attr should_return_futures
+
+If true, this indicates that the various network-accessing methods should
+return L<Future> objects rather than immediate results.
+
+=cut
+
+has should_return_futures => (
   is  => 'ro',
   default => 0,
 );
@@ -260,6 +267,10 @@ L<JMAP::Tester::Response> objects.
 Before the JMAP request is made, each triple is passed to a method called
 C<munge_method_triple>, which can tweak the method however it likes.
 
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
 =cut
 
 sub request {
@@ -350,7 +361,7 @@ sub request {
     return Future->done($self->_jresponse_from_hresponse($res));
   });
 
-  return $self->return_futures ? $future : $future->$Failsafe->get;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 sub munge_method_triple {}
@@ -422,6 +433,10 @@ The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
 result|JMAP::Tester::Result::Upload>.
 
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
 =cut
 
 sub upload {
@@ -482,7 +497,7 @@ sub upload {
     );
   });
 
-  return $self->return_futures ? $future : $future->$Failsafe->get;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method download
@@ -503,6 +518,10 @@ will be thrown.
 The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
 result|JMAP::Tester::Result::Download>.
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
 
 =cut
 
@@ -590,12 +609,16 @@ sub download {
     );
   });
 
-  return $self->return_futures ? $future : $future->$Failsafe->get;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method simple_auth
 
   my $auth_struct = $tester->simple_auth($username, $password);
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
 
 =cut
 
@@ -723,7 +746,7 @@ sub simple_auth {
     return Future->done($auth);
   });
 
-  return $self->return_futures ? $future : $future->$Failsafe->get;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method update_client_session
@@ -733,6 +756,10 @@ sub simple_auth {
 
 This method fetches the content at the authentication endpoint and uses it to
 configure the tester's target URIs and signing keys.
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
 
 =cut
 
@@ -772,7 +799,7 @@ sub update_client_session {
     return Future->done($auth);
   });
 
-  return $self->return_futures ? $future : $future->$Failsafe->get;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method configure_from_client_session
@@ -834,6 +861,10 @@ sub configure_from_client_session {
 This method attempts to log out from the server by sending a C<DELETE> request
 to the authentication URI.
 
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
 =cut
 
 sub logout {
@@ -873,7 +904,7 @@ sub logout {
     );
   });
 
-  return $self->return_futures ? $future : $future->$Failsafe->get;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method http_request
@@ -885,7 +916,9 @@ connection.  This might be to interact with a custom authentication mechanism,
 to access custom endpoints, or just to make very, very specifically crafted
 requests.  For this reasons, C<http_request> exists.
 
-This returns either an HTTP::Response or a Future that will complete to one.
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the HTTP::Response.
 
 =cut
 
@@ -893,7 +926,7 @@ sub http_request {
   my ($self, $http_request) = @_;
 
   my $future = $self->ua->request($self, $http_request, 'misc');
-  return $self->return_futures ? $future : $future->$Failsafe->get;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method http_get
