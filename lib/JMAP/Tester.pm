@@ -99,8 +99,8 @@ has should_return_futures => (
 # We use Future->fail because that way we can use ->else in chains to only act
 # on successful HTTP calls. At the end, it's fine if you're expecting a future
 # and can know that a failed future is a fail and a done future is okay. In the
-# old calling convention, though, you expect to get a success/fail object no
-# matter what, and unexpected behavior is fatal.
+# old calling convention, though, you expect to get a success/fail object as
+# long as you got an HTTP response.  Otherwise, you'd get an exception.
 #
 # $Failsafe emulates that. Just before we return from a future-returning
 # method, and if the client is not set to return futures, we do this:
