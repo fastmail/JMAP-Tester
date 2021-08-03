@@ -19,6 +19,8 @@ has lwp => (
     my $lwp = LWP::UserAgent->new;
     $lwp->cookie_jar({});
 
+    $lwp->default_header('Content-Type' => 'application/json');
+
     if ($ENV{IGNORE_INVALID_CERT}) {
       $lwp->ssl_opts(SSL_verify_mode => 0, verify_hostname => 0);
     }
