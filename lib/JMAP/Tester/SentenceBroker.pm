@@ -82,4 +82,4 @@ sub strip_json_types {
 }
 
 no Moo;
-__PACKAGE__->meta->make_immutable;
+1;
