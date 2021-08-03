@@ -47,6 +47,12 @@ has _default_headers => (
   default => sub {  {}  },
 );
 
+sub get_default_header {
+  my ($self, $name) = @_;
+
+  return scalar $self->_default_headers->{$name};
+}
+
 sub set_default_header {
   my ($self, $name, $value) = @_;
 

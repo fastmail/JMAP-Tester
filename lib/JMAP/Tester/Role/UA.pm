@@ -13,6 +13,7 @@ requires qw( set_cookie );
 requires qw( scan_cookies );
 
 # Is this also a terrible idea?
+requires qw( get_default_header );
 requires qw( set_default_header );
 
 no Moo::Role;

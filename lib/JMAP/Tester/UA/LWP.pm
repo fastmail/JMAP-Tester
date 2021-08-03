@@ -56,6 +56,12 @@ sub scan_cookies {
   return $self->lwp->cookie_jar->scan($callback);
 }
 
+sub get_default_header {
+  my ($self, $name) = @_;
+
+  return scalar $self->lwp->default_header($name);
+}
+
 sub set_default_header {
   my ($self, $name, $value) = @_;
 
