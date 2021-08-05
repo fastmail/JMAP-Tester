@@ -89,10 +89,12 @@ sub request {
       # it
       my $log_method = "log_" . ($log_type // 'jmap') . '_request';
 
-      $tester->_logger->$log_method({
-        ($log_extra ? %$log_extra : ()),
-        http_request => $req,
-      });
+      if ($logger->can($log_method)) {
+        $tester->_logger->$log_method({
+          ($log_extra ? %$log_extra : ()),
+          http_request => $req,
+        });
+      }
 
       return Future->done;
     },
