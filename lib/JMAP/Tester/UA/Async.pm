@@ -44,7 +44,11 @@ sub scan_cookies {
 
 has _default_headers => (
   is => 'ro',
-  default => sub {  {}  },
+  default => sub {
+    {
+      'Content-Type' => 'application/json',
+    }
+  },
 );
 
 sub get_default_header {
