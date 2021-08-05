@@ -22,7 +22,7 @@ sub set_cookie {
 
   my $uri = URI->new($arg->{api_uri});
 
-  $self->http_client->cookie_jar->set_cookie(
+  $self->http_client->{cookie_jar}->set_cookie(
     1,
     $arg->{name},
     $arg->{value},
@@ -39,7 +39,7 @@ sub set_cookie {
 
 sub scan_cookies {
   my ($self, $callback) = @_;
-  return $self->http_client->cookie_jar->scan($callback);
+  return $self->http_client->{cookie_jar}->scan($callback);
 }
 
 has _default_headers => (
