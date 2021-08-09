@@ -162,10 +162,10 @@ sub assert_no_errors {
 
   return $self unless @errors;
 
-  $self->sentence_broker->abort_callback->({
-    message     => "errors found in " . $self->name . " sentence",
-    diagnostics => \@errors,
-  });
+  $self->sentence_broker->abort(
+    "errors found in " . $self->name . " sentence",
+    \@errors,
+  );
 }
 
 1;

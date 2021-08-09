@@ -8,6 +8,6 @@ requires 'paragraph_for_items';
 
 requires 'strip_json_types';
 
-requires 'abort_callback';
+requires 'abort';
 
 1;

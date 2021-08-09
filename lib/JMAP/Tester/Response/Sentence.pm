@@ -85,7 +85,7 @@ sub as_set {
   my ($self) = @_;
 
   unless ($self->name =~ m{/set$}) {
-    return $self->sentence_broker->abort_callback->(
+    return $self->sentence_broker->abort(
       sprintf(qq{tried to call ->as_set on sentence named "%s"}, $self->name)
     );
   }
@@ -116,7 +116,7 @@ sub assert_named {
 
   return $self if $self->name eq $name;
 
-  $self->sentence_broker->abort_callback->(
+  $self->sentence_broker->abort(
     sprintf qq{expected sentence named "%s" but got "%s"}, $name, $self->name
   );
 }

@@ -17,7 +17,7 @@ sub _log_generic {
   return;
 }
 
-for my $which (qw(jmap upload download)) {
+for my $which (qw(jmap misc upload download)) {
   for my $what (qw(request response)) {
     my $method = "log_${which}_${what}";
     no strict 'refs';

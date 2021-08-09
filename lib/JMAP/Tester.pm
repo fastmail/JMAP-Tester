@@ -9,6 +9,7 @@ use Moo;
 use Crypt::Misc qw(decode_b64u encode_b64u);
 use Crypt::Mac::HMAC qw(hmac_b64u);
 use Encode qw(encode_utf8);
+use Future;
 use HTTP::Request;
 use JMAP::Tester::Abort 'abort';
 use JMAP::Tester::Logger::Null;
@@ -20,6 +21,7 @@ use JMAP::Tester::Result::Logout;
 use JMAP::Tester::Result::Upload;
 use Module::Runtime ();
 use Params::Util qw(_HASH0 _ARRAY0);
+use Safe::Isa;
 use URI;
 use URI::QueryParam;
 use URI::Escape qw(uri_escape);
@@ -77,6 +79,43 @@ There is also L<JMAP::Tester::Response/"as_stripped_pairs">.
 
 =cut
 
+=attr should_return_futures
+
+If true, this indicates that the various network-accessing methods should
+return L<Future> objects rather than immediate results.
+
+=cut
+
+has should_return_futures => (
+  is  => 'ro',
+  default => 0,
+);
+
+# When something doesn't work — not an individual method call, but the whole
+# HTTP call, somehow — then the future will fail, and the failure might be a
+# JMAP tester failure object, meaning we semi-expected it, or it might be some
+# other crazy failure, meaning we had no way of seeing it coming.
+#
+# We use Future->fail because that way we can use ->else in chains to only act
+# on successful HTTP calls. At the end, it's fine if you're expecting a future
+# and can know that a failed future is a fail and a done future is okay. In the
+# old calling convention, though, you expect to get a success/fail object as
+# long as you got an HTTP response.  Otherwise, you'd get an exception.
+#
+# $Failsafe emulates that. Just before we return from a future-returning
+# method, and if the client is not set to return futures, we do this:
+#
+# * successful futures return their payload, the Result object
+# * failed futures that contain a JMAP tester Failure return the failure
+# * other failed futures die, like they would if you called $failed_future->get
+my $Failsafe = sub {
+  $_[0]->else_with_f(sub {
+    my ($f, $fail) = @_;
+    return $fail->$_isa('JMAP::Tester::Result::Failure') ? Future->done($fail)
+                                                         : $f;
+  });
+};
+
 has json_codec => (
   is => 'bare',
   handles => {
@@ -110,45 +149,12 @@ for my $type (qw(api authentication download upload)) {
 }
 
 has ua => (
-  is   => 'ro',
-  lazy => 1,
+  is => 'ro',
   default => sub {
-    my ($self) = @_;
-
-    require LWP::UserAgent;
-    my $ua = LWP::UserAgent->new;
-    $ua->cookie_jar({});
-
-    if ($ENV{IGNORE_INVALID_CERT}) {
-      $ua->ssl_opts(SSL_verify_mode => 0, verify_hostname => 0);
-    }
-
-    return $ua;
+    require JMAP::Tester::UA::LWP;
+    JMAP::Tester::UA::LWP->new;
   },
 );
-
-sub _set_cookie {
-  my ($self, $name, $value, $arg) = @_;
-
-  Carp::confess("can't _set_cookie without api_uri configured")
-    unless $self->has_api_uri;
-
-  my $uri = URI->new($self->api_uri);
-
-  $self->ua->cookie_jar->set_cookie(
-    1,
-    $name,
-    $value,
-    '/',
-    $arg->{domain} // $uri->host,
-    $uri->port,
-    0,
-    ($uri->port == 443 ? 1 : 0),
-    86400,
-    0,
-    $arg->{rest} || {},
-  );
-}
 
 =attr default_using
 
@@ -261,6 +267,10 @@ L<JMAP::Tester::Response> objects.
 Before the JMAP request is made, each triple is passed to a method called
 C<munge_method_triple>, which can tweak the method however it likes.
 
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
 =cut
 
 sub request {
@@ -333,38 +343,30 @@ sub request {
     $json,
   );
 
-  my $logger = $self->_logger;
-
-  $self->ua->set_my_handler(request_send => sub {
-    my ($req) = @_;
-    $logger->log_jmap_request({
-      jmap_array   => \@suffixed,
-      json         => $json,
-      http_request => $req,
-    });
-    return;
+  my $res_f = $self->ua->request($self, $post, jmap => {
+    jmap_array   => \@suffixed,
+    json         => $json,
   });
 
-  my $http_res = $self->ua->request($post);
+  my $future = $res_f->then(sub {
+    my ($res) = @_;
 
-  # Clear our handler, or it will get called for
-  # any http request our ua makes!
-  $self->ua->set_my_handler(request_send => undef);
+    unless ($res->is_success) {
+      $self->_logger->log_jmap_response({ http_response => $res });
+      return Future->fail(
+        JMAP::Tester::Result::Failure->new({ http_response => $res })
+      );
+    }
 
-  unless ($http_res->is_success) {
-    $logger->log_jmap_response({
-      http_response => $http_res,
-    });
+    return Future->done($self->_jresponse_from_hresponse($res));
+  });
 
-    return JMAP::Tester::Result::Failure->new({
-      http_response => $http_res,
-    });
-  }
-
-  return $self->_jresponse_from_hresponse($http_res);
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 sub munge_method_triple {}
+
+sub response_class { 'JMAP::Tester::Response' }
 
 sub _jresponse_from_hresponse {
   my ($self, $http_res) = @_;
@@ -391,7 +393,7 @@ sub _jresponse_from_hresponse {
     http_response => $http_res,
   });
 
-  return JMAP::Tester::Response->new({
+  return $self->response_class->new({
     items => $items,
     http_response       => $http_res,
     wrapper_properties  => $props,
@@ -431,6 +433,10 @@ The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
 result|JMAP::Tester::Result::Upload>.
 
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
 =cut
 
 sub upload {
@@ -462,45 +468,36 @@ sub upload {
     ${ $arg->{blob} },
   );
 
-  my $logger = $self->_logger;
+  my $res_f = $self->ua->request($self, $post, 'upload');
 
-  $self->ua->set_my_handler(request_send => sub {
-    my ($req) = @_;
-    $logger->log_upload_request({
-      http_request => $req,
-    });
-    return;
-  });
+  my $future = $res_f->then(sub {
+    my ($res) = @_;
 
-  my $res = $self->ua->request($post);
+    unless ($res->is_success) {
+      $self->_logger->log_upload_response({ http_response => $res });
+      return Future->fail(
+        JMAP::Tester::Result::Failure->new({ http_response => $res })
+      );
+    }
 
-  # Clear our handler, or it will get called for
-  # any http request our ua makes!
-  $self->ua->set_my_handler(request_send => undef);
+    my $json = $res->decoded_content;
+    my $blob = $self->apply_json_types( $self->json_decode( $json ) );
 
-  unless ($res->is_success) {
-    $logger->log_upload_response({
+    $self->_logger->log_upload_response({
+      json          => $json,
+      blob_struct   => $blob,
       http_response => $res,
     });
 
-    return JMAP::Tester::Result::Failure->new({
-      http_response => $res,
-    });
-  }
-
-  my $json = $res->decoded_content;
-  my $blob = $self->apply_json_types( $self->json_decode( $json ) );
-
-  $logger->log_upload_response({
-    json          => $json,
-    blob_struct   => $blob,
-    http_response => $res,
+    return Future->done(
+      JMAP::Tester::Result::Upload->new({
+        http_response => $res,
+        payload       => $blob,
+      })
+    );
   });
 
-  return JMAP::Tester::Result::Upload->new({
-    http_response => $res,
-    payload       => $blob,
-  });
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method download
@@ -521,6 +518,10 @@ will be thrown.
 The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
 result|JMAP::Tester::Result::Download>.
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
 
 =cut
 
@@ -588,40 +589,36 @@ sub download {
     ],
   );
 
-  my $logger = $self->_logger;
+  my $res_f = $self->ua->request($self, $get, 'download');
 
-  $self->ua->set_my_handler(request_send => sub {
-    my ($req) = @_;
-    $logger->log_download_request({
-      http_request => $req,
-    });
-    return;
-  });
+  my $future = $res_f->then(sub {
+    my ($res) = @_;
 
-  my $res = $self->ua->request($get);
-
-  # Clear our handler, or it will get called for
-  # any http request our ua makes!
-  $self->ua->set_my_handler(request_send => undef);
-
-  $logger->log_download_response({
-    http_response => $res,
-  });
-
-  unless ($res->is_success) {
-    return JMAP::Tester::Result::Failure->new({
+    $self->_logger->log_download_response({
       http_response => $res,
     });
-  }
 
-  return JMAP::Tester::Result::Download->new({
-    http_response => $res,
+    unless ($res->is_success) {
+      return Future->fail(
+        JMAP::Tester::Result::Failure->new({ http_response => $res })
+      );
+    }
+
+    return Future->done(
+      JMAP::Tester::Result::Download->new({ http_response => $res })
+    );
   });
+
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method simple_auth
 
   my $auth_struct = $tester->simple_auth($username, $password);
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
 
 =cut
 
@@ -676,59 +673,80 @@ sub simple_auth {
     deviceName    => 'JMAP Testing Client',
   });
 
-  my $start_res = $self->ua->post(
-    $self->authentication_uri,
-    'Content-Type' => 'application/json; charset=utf-8',
-    'Accept'       => 'application/json',
-    'Content'      => $start_json,
+  my $start_req = HTTP::Request->new(
+    POST => $self->authentication_uri,
+    [
+      'Content-Type' => 'application/json; charset=utf-8',
+      'Accept'       => 'application/json',
+    ],
+    $start_json,
   );
 
-  unless ($start_res->code == 200) {
-    return JMAP::Tester::Result::Failure->new({
-      ident         => 'failure in auth phase 1',
-      http_response => $start_res,
+  my $start_res_f = $self->ua->request($self, $start_req, 'auth');
+
+  my $future = $start_res_f->then(sub {
+    my ($res) = @_;
+
+    unless ($res->code == 200) {
+      return Future->fail(
+        JMAP::Tester::Result::Failure->new({
+          ident         => 'failure in auth phase 1',
+          http_response => $res,
+        })
+      );
+    }
+
+    my $start_reply = $self->json_decode( $res->decoded_content );
+
+    unless (grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} }) {
+      return Future->fail(
+        JMAP::Tester::Result::Failure->new({
+          ident         => "password is not an authentication method",
+          http_response => $res,
+        })
+      );
+    }
+
+    my $next_json = $self->json_encode({
+      loginId => $start_reply->{loginId},
+      type    => 'password',
+      value   => $password,
     });
-  }
 
-  my $start_reply = $self->json_decode( $start_res->decoded_content );
+    my $next_req = HTTP::Request->new(
+      POST => $self->authentication_uri,
+      [
+        'Content-Type' => 'application/json; charset=utf-8',
+        'Accept'       => 'application/json',
+      ],
+      $next_json,
+    );
 
-  unless (grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} }) {
-    return JMAP::Tester::Result::Failure->new({
-      ident         => "password is not an authentication method",
-      http_response => $start_res,
+    return $self->ua->request($self, $next_req, 'auth');
+  })->then(sub {
+    my ($res) = @_;
+    unless ($res->code == 201) {
+      return Future->fail(
+        JMAP::Tester::Result::Failure->new({
+          ident         => 'failure in auth phase 2',
+          http_response => $res,
+        })
+      );
+    }
+
+    my $client_session = $self->json_decode( $res->decoded_content );
+
+    my $auth = JMAP::Tester::Result::Auth->new({
+      http_response   => $res,
+      client_session  => $client_session,
     });
-  }
 
-  my $next_json = $self->json_encode({
-    loginId => $start_reply->{loginId},
-    type    => 'password',
-    value   => $password,
+    $self->configure_from_client_session($client_session);
+
+    return Future->done($auth);
   });
 
-  my $next_res = $self->ua->post(
-    $self->authentication_uri,
-    'Content-Type' => 'application/json; charset=utf-8',
-    'Accept'       => 'application/json',
-    'Content'      => $next_json,
-  );
-
-  unless ($next_res->code == 201) {
-    return JMAP::Tester::Result::Failure->new({
-      ident         => 'failure in auth phase 2',
-      http_response => $next_res,
-    });
-  }
-
-  my $client_session = $self->json_decode( $next_res->decoded_content );
-
-  my $auth = JMAP::Tester::Result::Auth->new({
-    http_response   => $next_res,
-    client_session  => $client_session,
-  });
-
-  $self->configure_from_client_session($client_session);
-
-  return $auth;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method update_client_session
@@ -739,35 +757,49 @@ sub simple_auth {
 This method fetches the content at the authentication endpoint and uses it to
 configure the tester's target URIs and signing keys.
 
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
 =cut
 
 sub update_client_session {
   my ($self, $auth_uri) = @_;
   $auth_uri //= $self->authentication_uri;
 
-  my $auth_res = $self->ua->get(
-    $auth_uri,
-    $self->_maybe_auth_header,
-    'Accept' => 'application/json',
+  my $auth_req = HTTP::Request->new(
+    GET => $auth_uri,
+    [
+      $self->_maybe_auth_header,
+      'Accept' => 'application/json',
+    ],
   );
 
-  unless ($auth_res->code == 200) {
-    return JMAP::Tester::Result::Failure->new({
-      ident         => 'failure to get updated authentication data',
-      http_response => $auth_res,
+  my $future = $self->ua->request($self, $auth_req, 'auth')->then(sub {
+    my ($res) = @_;
+
+    unless ($res->code == 200) {
+      return Future->fail(
+        JMAP::Tester::Result::Failure->new({
+          ident         => 'failure to get updated authentication data',
+          http_response => $res,
+        })
+      );
+    }
+
+    my $client_session = $self->json_decode( $res->decoded_content );
+
+    my $auth = JMAP::Tester::Result::Auth->new({
+      http_response   => $res,
+      client_session  => $client_session,
     });
-  }
 
-  my $client_session = $self->json_decode( $auth_res->decoded_content );
+    $self->configure_from_client_session($client_session);
 
-  my $auth = JMAP::Tester::Result::Auth->new({
-    http_response   => $auth_res,
-    client_session  => $client_session,
+    return Future->done($auth);
   });
 
-  $self->configure_from_client_session($client_session);
-
-  return $auth;
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
 =method configure_from_client_session
@@ -829,6 +861,10 @@ sub configure_from_client_session {
 This method attempts to log out from the server by sending a C<DELETE> request
 to the authentication URI.
 
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
 =cut
 
 sub logout {
@@ -839,26 +875,102 @@ sub logout {
   Carp::confess("can't logout: no authentication_uri configured")
     unless $self->has_authentication_uri;
 
-  my $logout_res = $self->ua->delete(
-    $self->authentication_uri,
+  my $req = HTTP::Request->new(
+    DELETE => $self->authentication_uri,
     [
       'Content-Type' => 'application/json; charset=utf-8',
       'Accept'       => 'application/json',
     ],
   );
 
-  if ($logout_res->code == 204) {
-    $self->_access_token(undef);
+  my $future = $self->ua->request($self, $req, 'auth')->then(sub {
+    my ($res) = @_;
 
-    return JMAP::Tester::Result::Logout->new({
-      http_response => $logout_res,
-    });
-  }
+    if ($res->code == 204) {
+      $self->_access_token(undef);
 
-  return JMAP::Tester::Result::Failure->new({
-    ident => "failed to log out",
-    http_response => $logout_res,
+      return Future->done(
+        JMAP::Tester::Result::Logout->new({
+          http_response => $res,
+        })
+      );
+    }
+
+    return Future->fail(
+      JMAP::Tester::Result::Failure->new({
+        ident => "failed to log out",
+        http_response => $res,
+      })
+    );
   });
+
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
+}
+
+=method http_request
+
+  my $response = $jtest->http_request($http_request);
+
+Sometimes, you may need to make an HTTP request with your existing web
+connection.  This might be to interact with a custom authentication mechanism,
+to access custom endpoints, or just to make very, very specifically crafted
+requests.  For this reasons, C<http_request> exists.
+
+Pass this method an L<HTTP::Request> and it will use the tester's UA object to
+make the request.
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the L<HTTP::Response>.
+
+=cut
+
+sub http_request {
+  my ($self, $http_request) = @_;
+
+  my $future = $self->ua->request($self, $http_request, 'misc');
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
+}
+
+=method http_get
+
+  my $response = $jtest->http_get($url, $headers);
+
+This method is just sugar for calling C<http_request> to make a GET request for
+the given URL.  C<$headers> is an optional arrayref of headers.
+
+=cut
+
+sub http_get {
+  my ($self, $url, $headers) = @_;
+
+  my $req = HTTP::Request->new(
+    GET => $url,
+    (defined $headers ? $headers : ()),
+  );
+  return $self->http_request($req);
+}
+
+=method http_post
+
+  my $response = $jtest->http_post($url, $body, $headers);
+
+This method is just sugar for calling C<http_request> to make a POST request
+for the given URL.  C<$headers> is an arrayref of headers and C<$body> is the
+byte string to be passed as the body.
+
+=cut
+
+sub http_post {
+  my ($self, $url, $body, $headers) = @_;
+
+  my $req = HTTP::Request->new(
+    POST => $url,
+    $headers // [],
+    $body,
+  );
+
+  return $self->http_request($req);
 }
 
 1;
