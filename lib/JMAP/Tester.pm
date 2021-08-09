@@ -916,9 +916,12 @@ connection.  This might be to interact with a custom authentication mechanism,
 to access custom endpoints, or just to make very, very specifically crafted
 requests.  For this reasons, C<http_request> exists.
 
+Pass this method an L<HTTP::Request> and it will use the tester's UA object to
+make the request.
+
 This method respects the C<should_return_futures> attributes of the
 JMAP::Tester object, and in futures mode will return a future that will resolve
-to the HTTP::Response.
+to the L<HTTP::Response>.
 
 =cut
 
