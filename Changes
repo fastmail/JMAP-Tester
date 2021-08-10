@@ -6,7 +6,9 @@ Revision history for {{$dist->name}}
           LWP::UserAgent.  This allows the use of other user agents.  More
           importantly, the tester can be configured to return Futures instead
           of immediate responses, which means it can be operated in
-          non-blocking mode.
+          non-blocking mode.  If you have been interacting with the result of
+          ->ua directly, you should read the details of its new interface in
+          JMAP::Tester::Role::UA and then update your code.
 
 0.026     2019-03-08 15:48:29-05:00 America/New_York
         - fix reference type of accounts collection (thanks, WOLFSAGE)
