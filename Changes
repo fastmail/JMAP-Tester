@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.101     2021-08-13 11:02:38-04:00 America/New_York
         - work around bugs in older Role::Tiny; this is what you want if you
           saw: Can't use string ("-1") as a symbol ref
 
