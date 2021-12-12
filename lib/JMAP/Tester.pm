@@ -846,7 +846,7 @@ sub configure_from_client_session {
     $self->_jwt_config(undef);
   }
 
-  for my $type (qw(api authentication download upload)) {
+  for my $type (qw(api download upload)) {
     if (defined (my $uri = $client_session->{"${type}Url"})) {
       my $setter = "$type\_uri";
       $self->$setter($uri);
