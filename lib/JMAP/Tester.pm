@@ -563,9 +563,12 @@ sub download_uri_for {
       typ => 'JWT',
     }) );
 
+    my $iat = time;
+    $iat = $iat - ($iat % 3600);
+
     my $payload = encode_b64u( $self->json_encode({
       iss => $jwtc->{signingId},
-      iat => time,
+      iat => $iat,
       sub => $self->_jwt_sub_param_from_uri($to_sign),
     }) );
 
