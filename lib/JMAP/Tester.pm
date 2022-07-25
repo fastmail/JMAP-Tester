@@ -8,7 +8,6 @@ use Moo;
 
 use Crypt::Misc qw(decode_b64u encode_b64u);
 use Crypt::Mac::HMAC qw(hmac_b64u);
-use Digest::SHA ();
 use Encode qw(encode_utf8);
 use Future;
 use HTTP::Request;
@@ -528,6 +527,11 @@ to the Result.
 
 my %DL_DEFAULT = (name => 'download');
 
+sub _jwt_sub_param_from_uri {
+  my ($self, $to_sign) = @_;
+  "$to_sign";
+}
+
 sub download_uri_for {
   my ($self, $arg) = @_;
 
@@ -562,7 +566,7 @@ sub download_uri_for {
     my $payload = encode_b64u( $self->json_encode({
       iss => $jwtc->{signingId},
       iat => time,
-      sub => encode_b64u(Digest::SHA::sha256("$to_sign")),
+      sub => $self->_jwt_sub_param_from_uri($to_sign),
     }) );
 
     my $signature = hmac_b64u(
