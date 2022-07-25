@@ -527,6 +527,11 @@ to the Result.
 
 my %DL_DEFAULT = (name => 'download');
 
+sub _jwt_sub_param_from_uri {
+  my ($self, $to_sign) = @_;
+  "$to_sign";
+}
+
 sub download_uri_for {
   my ($self, $arg) = @_;
 
@@ -558,10 +563,13 @@ sub download_uri_for {
       typ => 'JWT',
     }) );
 
+    my $iat = time;
+    $iat = $iat - ($iat % 3600);
+
     my $payload = encode_b64u( $self->json_encode({
       iss => $jwtc->{signingId},
-      iat => time,
-      sub => "$to_sign",
+      iat => $iat,
+      sub => $self->_jwt_sub_param_from_uri($to_sign),
     }) );
 
     my $signature = hmac_b64u(
