@@ -128,6 +128,13 @@ has json_codec => (
   },
 );
 
+=attr use_json_typists
+
+This attribute governs the conversion of JSON data into typed objects, using
+L<JSON::Typist>.  This attribute is true by default.
+
+=cut
+
 has use_json_typist => (
   is => 'ro',
   default => 1,
