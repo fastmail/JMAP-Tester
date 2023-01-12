@@ -1,4 +1,4 @@
-use v5.10.0;
+use v5.14.0;
 use warnings;
 
 package JMAP::Tester::Role::UA;

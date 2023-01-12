@@ -1,5 +1,4 @@
-use v5.10.0;
-use strict;
+use v5.14.0;
 
 package JMAP::Tester::Result::Upload;
 # ABSTRACT: what you get when you upload a blob
@@ -24,8 +23,8 @@ An alias for C<blob_id> above.
 
 =method type
 
-The media type of the file (as specified in RFC6838, section 4.2) as 
-set in the Content-Type header of the upload HTTP request.
+The media type of the file (as specified in RFC6838, section 4.2) as set in the
+Content-Type header of the upload HTTP request.
 
 =method size
 

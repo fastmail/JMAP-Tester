@@ -1,5 +1,4 @@
-use v5.10.0;
-use strict;
+use v5.14.0;
 
 package JMAP::Tester::Result::Failure;
 # ABSTRACT: what you get when your JMAP request utterly fails

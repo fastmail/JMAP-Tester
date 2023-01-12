@@ -1,3 +1,4 @@
+use v5.14.0;
 package JMAP::Tester::Logger;
 
 use Moo::Role;

@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - update distribution metadata
+        - bump required Perl to v5.14.0
 
 0.102     2022-07-25 10:45:39-04:00 America/New_York
         - allow subclasses to change how JWT-authenticated links work

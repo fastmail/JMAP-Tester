@@ -1,4 +1,4 @@
-use v5.10.0;
+use v5.14.0;
 package JMAP::Tester::Response::Sentence::Set;
 # ABSTRACT: the kind of sentence you get in reply to a setFoos call
 
