@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.103     2023-01-11 21:24:00-05:00 America/New_York
         - update distribution metadata
         - bump required Perl to v5.14.0
 
