@@ -608,6 +608,11 @@ sub download {
 
   my $uri = $self->download_uri_for($arg);
 
+  # This is useful if you need to, for example, sign the URLs
+  if (my $cb = $arg->{uri_callback}) {
+    $uri = $cb->($uri);
+  }
+
   my $get = HTTP::Request->new(
     GET => $uri,
     [
