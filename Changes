@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.104     2025-06-11 13:28:56-04:00 America/New_York
         - add a TO_JSON method to the Sentence class
         - include ->sentences, not ->items in default diagnostics (which allows
           smarter diagnostic dumpers to filter based on the class)
