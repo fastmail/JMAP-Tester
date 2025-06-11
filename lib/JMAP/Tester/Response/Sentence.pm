@@ -121,4 +121,10 @@ sub assert_named {
   );
 }
 
+sub TO_JSON {
+  my ($self) = @_;
+
+  return [ $self->name, $self->arguments, $self->client_id ];
+}
+
 1;

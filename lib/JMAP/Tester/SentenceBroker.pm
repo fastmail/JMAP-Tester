@@ -42,7 +42,7 @@ sub paragraph_for_items {
 sub abort {
   my ($self, $string, $diag_spec) = @_;
 
-  $diag_spec //= [ 'Response sentences', sub { [ $_[0]->items ] } ];
+  $diag_spec //= [ 'Response sentences', sub { [ $_[0]->sentences ] } ];
 
   my @diagnostics;
 
