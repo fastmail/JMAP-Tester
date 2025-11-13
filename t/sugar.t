@@ -1,4 +1,4 @@
-use strict;
+use v5.26.0; # lexical sub
 use warnings;
 
 use JMAP::Tester::Sugar '-all';
