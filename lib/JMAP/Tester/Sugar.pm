@@ -18,7 +18,7 @@ sub jset ($type, $arg, $call_id = undef) {
 
     my $i = 0;
     for my $creation (@$create_spec) {
-      $method_arg{create}{$i++} = $creation;
+      $method_arg{create}{"$type-" . $i++} = $creation;
     }
   }
 

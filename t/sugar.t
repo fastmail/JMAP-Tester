@@ -16,30 +16,30 @@ for my $with_call_id (0, 1) {
     jcmp_deeply(
       jset(Email => { create => [ { subject => "Hi" }, { subject => "Bye" } ] }, maybe_cid),
       [ 'Email/set', { create => {
-        0 => { subject => "Hi" },
-        1 => { subject => "Bye" },
+        "Email-0" => { subject => "Hi" },
+        "Email-1" => { subject => "Bye" },
       } }, maybe_cid ],
       "multi-object jset create",
     );
 
     jcmp_deeply(
       jset(Email => { create => { subject => "Hi" } }, maybe_cid),
-      [ 'Email/set', { create => { 0 => { subject => "Hi" } } }, maybe_cid ],
+      [ 'Email/set', { create => { "Email-0" => { subject => "Hi" } } }, maybe_cid ],
       "single-object jset create",
     );
 
     jcmp_deeply(
       jcreate(Email => [ { subject => "Hi" }, { subject => "Bye" } ], maybe_cid),
       [ 'Email/set', { create => {
-        0 => { subject => "Hi" },
-        1 => { subject => "Bye" },
+        "Email-0" => { subject => "Hi" },
+        "Email-1" => { subject => "Bye" },
       } }, maybe_cid ],
       "multi-object jcreate",
     );
 
     jcmp_deeply(
       jcreate(Email => { subject => "Hi" }, maybe_cid),
-      [ 'Email/set', { create => { 0 => { subject => "Hi" } } }, maybe_cid ],
+      [ 'Email/set', { create => { "Email-0" => { subject => "Hi" } } }, maybe_cid ],
       "single-object jcreate",
     );
   };
