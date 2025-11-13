@@ -29,8 +29,8 @@ sub jset ($type, $arg, $call_id = undef) {
   ];
 }
 
-sub jcreate ($type, $create) {
-  return jset($type, { create => $create });
+sub jcreate ($type, $create, $call_id = undef) {
+  return jset($type, { create => $create }, $call_id);
 }
 
 1;
