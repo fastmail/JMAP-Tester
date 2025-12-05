@@ -520,9 +520,9 @@ sub upload {
 
 =method download
 
-  my $result = $tester->download(\%arg);
+  my $result = $tester->download(\%uri_arg, \%other_arg);
 
-Valid arguments are:
+The first hashref provides values that go into the download URI:
 
   blobId    - the blob to download (no default)
   accountId - the account for which we're downloading (no default)
@@ -532,6 +532,13 @@ Valid arguments are:
 If the download URI template has a C<blobId>, C<accountId>, or C<type>
 placeholder but no argument for that is given to C<download>, an exception
 will be thrown.
+
+The second hashref, which is optional, provides other arguments to the method.
+Right now, there is only one, B<which will go away>.  The argument is only here
+for legacy purposes, specifically for the Cyrus IMAP project, and may be
+removed B<at any time>.
+
+  accept    - the value of the Accept header to use when downloading
 
 The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
@@ -604,14 +611,15 @@ sub download_uri_for {
 }
 
 sub download {
-  my ($self, $arg) = @_;
+  my ($self, $uri_arg, $arg) = @_;
 
-  my $uri = $self->download_uri_for($arg);
+  my $uri = $self->download_uri_for($uri_arg);
 
   my $get = HTTP::Request->new(
     GET => $uri,
     [
       $self->_maybe_auth_header,
+      ($arg->{accept} ? (Accept => $arg->{accept}) : ()),
     ],
   );
 
