@@ -16,7 +16,7 @@ has lwp => (
     my ($self) = @_;
 
     require LWP::UserAgent;
-    my $lwp = LWP::UserAgent->new;
+    my $lwp = LWP::UserAgent->new(keep_alive => 1);
     $lwp->cookie_jar({});
 
     $lwp->default_header('Content-Type' => 'application/json');
