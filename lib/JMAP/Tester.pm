@@ -783,22 +783,22 @@ sub simple_auth {
   return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
-=method update_client_session
+=method get_client_session
 
-  $tester->update_client_session;
-  $tester->update_client_session($auth_uri);
+  $tester->get_client_session;
+  $tester->get_client_session($auth_uri);
 
-This method fetches the content at the authentication endpoint and uses it to
-configure the tester's target URIs and signing keys.
+This method fetches the content at the authentication endpoint.
 
 This method respects the C<should_return_futures> attributes of the
 JMAP::Tester object, and in futures mode will return a future that will resolve
-to the Result.
+to the L<JMAP::Tester::Result::Auth> object.
 
 =cut
 
-sub update_client_session {
+sub _get_client_session_future {
   my ($self, $auth_uri) = @_;
+
   $auth_uri //= $self->authentication_uri;
 
   my $auth_req = HTTP::Request->new(
@@ -828,7 +828,37 @@ sub update_client_session {
       client_session  => $client_session,
     });
 
-    $self->configure_from_client_session($client_session);
+    return Future->done($auth);
+  });
+}
+
+sub get_client_session {
+  my ($self, $auth_uri) = @_;
+  my $future = $self->_get_client_session_future($auth_uri);
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
+}
+
+=method update_client_session
+
+  $tester->update_client_session;
+  $tester->update_client_session($auth_uri);
+
+This method fetches the content at the authentication endpoint and uses it to
+configure the tester's target URIs and signing keys.
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
+=cut
+
+sub update_client_session {
+  my ($self, $auth_uri) = @_;
+
+  my $future = $self->_get_client_session_future($auth_uri)->then(sub {
+    my ($auth) = @_;
+
+    $self->configure_from_client_session($auth->client_session);
 
     return Future->done($auth);
   });
