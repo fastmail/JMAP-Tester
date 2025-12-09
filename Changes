@@ -1,6 +1,10 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - add a (temporary!) second arg to ->download to allow setting the
+          Accept header
+        - convert the LWP-based UA to use keepalive
+        - add get_client_session to get the session without reconfiguring
 
 0.104     2025-06-11 13:28:56-04:00 America/New_York
         - add a TO_JSON method to the Sentence class
