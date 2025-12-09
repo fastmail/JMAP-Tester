@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.105     2025-12-09 11:44:18+11:00 Australia/Melbourne
         - add a (temporary!) second arg to ->download to allow setting the
           Accept header
         - convert the LWP-based UA to use keepalive
