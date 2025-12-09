@@ -520,9 +520,9 @@ sub upload {
 
 =method download
 
-  my $result = $tester->download(\%arg);
+  my $result = $tester->download(\%uri_arg, \%other_arg);
 
-Valid arguments are:
+The first hashref provides values that go into the download URI:
 
   blobId    - the blob to download (no default)
   accountId - the account for which we're downloading (no default)
@@ -532,6 +532,13 @@ Valid arguments are:
 If the download URI template has a C<blobId>, C<accountId>, or C<type>
 placeholder but no argument for that is given to C<download>, an exception
 will be thrown.
+
+The second hashref, which is optional, provides other arguments to the method.
+Right now, there is only one, B<which will go away>.  The argument is only here
+for legacy purposes, specifically for the Cyrus IMAP project, and may be
+removed B<at any time>.
+
+  accept    - the value of the Accept header to use when downloading
 
 The return value will either be a L<failure
 object|JMAP::Tester::Result::Failure> or an L<upload
@@ -604,14 +611,15 @@ sub download_uri_for {
 }
 
 sub download {
-  my ($self, $arg) = @_;
+  my ($self, $uri_arg, $arg) = @_;
 
-  my $uri = $self->download_uri_for($arg);
+  my $uri = $self->download_uri_for($uri_arg);
 
   my $get = HTTP::Request->new(
     GET => $uri,
     [
       $self->_maybe_auth_header,
+      ($arg->{accept} ? (Accept => $arg->{accept}) : ()),
     ],
   );
 
@@ -775,22 +783,22 @@ sub simple_auth {
   return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
-=method update_client_session
+=method get_client_session
 
-  $tester->update_client_session;
-  $tester->update_client_session($auth_uri);
+  $tester->get_client_session;
+  $tester->get_client_session($auth_uri);
 
-This method fetches the content at the authentication endpoint and uses it to
-configure the tester's target URIs and signing keys.
+This method fetches the content at the authentication endpoint.
 
 This method respects the C<should_return_futures> attributes of the
 JMAP::Tester object, and in futures mode will return a future that will resolve
-to the Result.
+to the L<JMAP::Tester::Result::Auth> object.
 
 =cut
 
-sub update_client_session {
+sub _get_client_session_future {
   my ($self, $auth_uri) = @_;
+
   $auth_uri //= $self->authentication_uri;
 
   my $auth_req = HTTP::Request->new(
@@ -820,7 +828,37 @@ sub update_client_session {
       client_session  => $client_session,
     });
 
-    $self->configure_from_client_session($client_session);
+    return Future->done($auth);
+  });
+}
+
+sub get_client_session {
+  my ($self, $auth_uri) = @_;
+  my $future = $self->_get_client_session_future($auth_uri);
+  return $self->should_return_futures ? $future : $future->$Failsafe->get;
+}
+
+=method update_client_session
+
+  $tester->update_client_session;
+  $tester->update_client_session($auth_uri);
+
+This method fetches the content at the authentication endpoint and uses it to
+configure the tester's target URIs and signing keys.
+
+This method respects the C<should_return_futures> attributes of the
+JMAP::Tester object, and in futures mode will return a future that will resolve
+to the Result.
+
+=cut
+
+sub update_client_session {
+  my ($self, $auth_uri) = @_;
+
+  my $future = $self->_get_client_session_future($auth_uri)->then(sub {
+    my ($auth) = @_;
+
+    $self->configure_from_client_session($auth->client_session);
 
     return Future->done($auth);
   });
