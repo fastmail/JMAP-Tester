@@ -174,6 +174,24 @@ has ua => (
   },
 );
 
+=attr ident
+
+This is a (preferably short) string that can be used to identify this
+JMAP::Tester object.  It's used in request logging, so that client telemetry
+can be correlated to a specific client object.  If no ident is given, an ident
+will be generated, but it is not guaranteed to be unique.
+
+=cut
+
+has ident => (
+  is => 'ro',
+  default => sub {
+    my ($self) = @_;
+    state $ident_counter = 0;
+    return "jmap-tester-" . (++$ident_counter);
+  }
+);
+
 =attr default_using
 
 This is an arrayref of strings that specify which capabilities the client
@@ -370,7 +388,7 @@ sub request {
     my ($res) = @_;
 
     unless ($res->is_success) {
-      $self->_logger->log_jmap_response({ http_response => $res });
+      $self->_logger->log_jmap_response($self, { http_response => $res });
       return Future->fail(
         JMAP::Tester::Result::Failure->new({ http_response => $res })
       );
@@ -405,11 +423,14 @@ sub _jresponse_from_hresponse {
     abort("illegal response to JMAP request: $data");
   }
 
-  $self->_logger->log_jmap_response({
-    jmap_array    => $items,
-    json          => $json,
-    http_response => $http_res,
-  });
+  $self->_logger->log_jmap_response(
+    $self,
+    {
+      jmap_array    => $items,
+      json          => $json,
+      http_response => $http_res,
+    }
+  );
 
   return $self->response_class->new({
     items => $items,
@@ -492,7 +513,7 @@ sub upload {
     my ($res) = @_;
 
     unless ($res->is_success) {
-      $self->_logger->log_upload_response({ http_response => $res });
+      $self->_logger->log_upload_response($self, { http_response => $res });
       return Future->fail(
         JMAP::Tester::Result::Failure->new({ http_response => $res })
       );
@@ -501,11 +522,14 @@ sub upload {
     my $json = $res->decoded_content;
     my $blob = $self->apply_json_types( $self->json_decode( $json ) );
 
-    $self->_logger->log_upload_response({
-      json          => $json,
-      blob_struct   => $blob,
-      http_response => $res,
-    });
+    $self->_logger->log_upload_response(
+      $self,
+      {
+        json          => $json,
+        blob_struct   => $blob,
+        http_response => $res,
+      }
+    );
 
     return Future->done(
       JMAP::Tester::Result::Upload->new({
@@ -628,9 +652,7 @@ sub download {
   my $future = $res_f->then(sub {
     my ($res) = @_;
 
-    $self->_logger->log_download_response({
-      http_response => $res,
-    });
+    $self->_logger->log_download_response($self, { http_response => $res });
 
     unless ($res->is_success) {
       return Future->fail(

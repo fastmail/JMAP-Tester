@@ -8,12 +8,13 @@ use namespace::clean;
 my %counter;
 
 sub _log_generic {
-  my ($self, $type, $thing) = @_;
+  my ($self, $tester, $type, $thing) = @_;
 
   my $i = $counter{$type}++;
-  $self->write("=== BEGIN \U$type\E $$.$i ===\n");
+  my $ident = $tester->ident;
+  $self->write("=== BEGIN \U$type\E $$.$i ($ident) ===\n");
   $self->write( $thing->as_string );
-  $self->write("=== END \U$type\E $$.$i ===\n");
+  $self->write("=== END \U$type\E $$.$i ($ident) ===\n");
   return;
 }
 
@@ -22,8 +23,8 @@ for my $which (qw(jmap misc upload download)) {
     my $method = "log_${which}_${what}";
     no strict 'refs';
     *$method = sub {
-      my ($self, $arg) = @_;
-      $self->_log_generic("$which $what", $arg->{"http_$what"});
+      my ($self, $tester, $arg) = @_;
+      $self->_log_generic($tester, "$which $what", $arg->{"http_$what"});
     }
   }
 }
