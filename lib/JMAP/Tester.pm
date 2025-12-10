@@ -116,17 +116,42 @@ my $Failsafe = sub {
   });
 };
 
+=attr json_pretty
+
+This is a boolean which, if true, will cause the JMAP::Tester object to
+canonicalize and pretty-print generated JSON.
+
+=cut
+
+has json_pretty => (
+  is => 'ro',
+  default => 0,
+);
+
 has json_codec => (
   is => 'bare',
+  reader => '_json_codec',
+  lazy => 1,
   handles => {
-    json_encode => 'encode',
     json_decode => 'decode',
   },
   default => sub {
+    my ($self) = @_;
+
     require JSON;
-    return JSON->new->utf8->convert_blessed;
+    my $json = JSON->new->utf8->convert_blessed;
+
+    if ($self->json_pretty) {
+      $json = $json->pretty->canonical;
+    }
+    return $json;
   },
 );
+
+sub json_encode {
+  my ($self, $data) = @_;
+  $self->_json_codec->encode($data);
+}
 
 =attr use_json_typists
 
