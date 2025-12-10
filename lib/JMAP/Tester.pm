@@ -128,6 +128,14 @@ has json_pretty => (
   default => 0,
 );
 
+=attr json_codec
+
+This is an object that implements the JSON API, roughly meaning that it
+provides C<encode> and C<decode> methods.  You probably won't need to use
+anything but the default version outside of exceptional cases.
+
+=cut
+
 has json_codec => (
   is => 'bare',
   reader => '_json_codec',
