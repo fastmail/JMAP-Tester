@@ -66,4 +66,14 @@ for my $case (@cases) {
   };
 }
 
+subtest "bogus use of json_literal" => sub {
+  my $res = $tester->request([
+    [ 'Bogus/call', { arg => json_literal("This will not appear") } ],
+  ]);
+
+  my $echoed_args = $res->sentence_named('Fake/echo')->arguments;
+  like($echoed_args->{echo}{methodCalls}[0][1]{arg}, qr/ERROR/, "error report in response");
+  unlike($echoed_args->{echo}{methodCalls}[0][1]{arg}, qr/not appear/, "we lost requested literal");
+};
+
 done_testing;

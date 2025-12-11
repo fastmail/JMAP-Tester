@@ -41,6 +41,18 @@ package JMAP::Tester::JSONLiteral {
   }
 
   sub bytes { return $_[0]{_bytes} }
+
+  sub TO_JSON {
+    # Some day, somebody is going to think that they can do this:
+    # $tester->request([[ json_literal(...), {...} ]]);
+    #
+    # ...but they can't, because you can't supply the JSON encoder a hunk of
+    # bytes to stick in the middle.  We can only decline to encode *at all*.
+    # Because TO_JSON can't really die to abort JSON encoding, we just put some
+    # obvious "you did it wrong" text into the output, and then we hope that
+    # the user reads the logging! -- rjbs, 2025-12-11
+    return "ERROR: a JMAP::Tester json_literal was passed to a JSON encoder"
+  }
 }
 
 sub json_literal ($bytes) {
