@@ -5,7 +5,7 @@ use warnings;
 
 use experimental 'signatures';
 
-use Sub::Exporter -setup => [ qw( jset jcreate ) ];
+use Sub::Exporter -setup => [ qw( jset jcreate json_literal ) ];
 
 sub jset ($type, $arg, $call_id = undef) {
   my %method_arg = %$arg;
@@ -31,6 +31,20 @@ sub jset ($type, $arg, $call_id = undef) {
 
 sub jcreate ($type, $create, $call_id = undef) {
   return jset($type, { create => $create }, $call_id);
+}
+
+package JMAP::Tester::JSONLiteral {
+  sub new {
+    my ($class, $bytes) = @_;
+
+    bless { _bytes => $bytes }, $class;
+  }
+
+  sub bytes { return $_[0]{_bytes} }
+}
+
+sub json_literal ($bytes) {
+  return JMAP::Tester::JSONLiteral->new($bytes);
 }
 
 1;
