@@ -116,17 +116,55 @@ my $Failsafe = sub {
   });
 };
 
+=attr json_pretty
+
+This is a boolean which, if true, will cause the JMAP::Tester object to
+canonicalize and pretty-print generated JSON.
+
+=cut
+
+has json_pretty => (
+  is => 'ro',
+  default => 0,
+);
+
+=attr json_codec
+
+This is an object that implements the JSON API, roughly meaning that it
+provides C<encode> and C<decode> methods.  You probably won't need to use
+anything but the default version outside of exceptional cases.
+
+=cut
+
 has json_codec => (
   is => 'bare',
+  reader => '_json_codec',
+  lazy => 1,
   handles => {
-    json_encode => 'encode',
     json_decode => 'decode',
   },
   default => sub {
-    require JSON;
-    return JSON->new->utf8->convert_blessed;
+    my ($self) = @_;
+
+    require JSON::XS;
+    my $json = JSON::XS->new->utf8->convert_blessed;
+
+    if ($self->json_pretty) {
+      $json = $json->pretty->canonical;
+    }
+    return $json;
   },
 );
+
+sub json_encode {
+  my ($self, $data) = @_;
+
+  if ($data->$_isa('JMAP::Tester::JSONLiteral')) {
+    return $data->bytes;
+  }
+
+  $self->_json_codec->encode($data);
+}
 
 =attr use_json_typists
 
@@ -321,51 +359,59 @@ sub request {
 
   my %default_args = %{ $self->default_arguments };
 
-  my $request = _ARRAY0($input_request)
-              ? { methodCalls => $input_request }
-              : { %$input_request };
+  my $request;
 
-  for my $call (@{ $request->{methodCalls} }) {
-    my $copy = [ @$call ];
-    if (defined $copy->[2]) {
-      $seen{$call->[2]}++;
-    } else {
-      my $next;
-      do { $next = $ident++ } until ! $seen{$ident}++;
-      $copy->[2] = $next;
-    }
+  if ($input_request->$_isa('JMAP::Tester::JSONLiteral')) {
+    # We'll be "encoding" (read: not really encoding) this directly, with no
+    # munging of the content, no creation of call ids, etc.
+    $request = $input_request;
+  } else {
+    $request = _ARRAY0($input_request)
+             ? { methodCalls => $input_request }
+             : { %$input_request };
 
-    my %arg = (
-      %default_args,
-      %{ $copy->[1] // {} },
-    );
-
-    for my $key (keys %arg) {
-      if ( ref $arg{$key}
-        && ref $arg{$key} eq 'SCALAR'
-        && ! defined ${ $arg{$key} }
-      ) {
-        delete $arg{$key};
+    for my $call (@{ $request->{methodCalls} }) {
+      my $copy = [ @$call ];
+      if (defined $copy->[2]) {
+        $seen{$call->[2]}++;
+      } else {
+        my $next;
+        do { $next = $ident++ } until ! $seen{$ident}++;
+        $copy->[2] = $next;
       }
+
+      my %arg = (
+        %default_args,
+        %{ $copy->[1] // {} },
+      );
+
+      for my $key (keys %arg) {
+        if ( ref $arg{$key}
+          && ref $arg{$key} eq 'SCALAR'
+          && ! defined ${ $arg{$key} }
+        ) {
+          delete $arg{$key};
+        }
+      }
+
+      $copy->[1] = \%arg;
+
+      # Originally, I had a second argument, \%stash, which was the same for the
+      # whole ->request, so you could store data between munges.  Removed, for
+      # now, as YAGNI. -- rjbs, 2019-03-04
+      $self->munge_method_triple($copy);
+
+      push @suffixed, $copy;
     }
 
-    $copy->[1] = \%arg;
+    $request->{methodCalls} = \@suffixed;
 
-    # Originally, I had a second argument, \%stash, which was the same for the
-    # whole ->request, so you could store data between munges.  Removed, for
-    # now, as YAGNI. -- rjbs, 2019-03-04
-    $self->munge_method_triple($copy);
+    $request = $request->{methodCalls}
+      if $ENV{JMAP_TESTER_NO_WRAPPER} && _ARRAY0($input_request);
 
-    push @suffixed, $copy;
-  }
-
-  $request->{methodCalls} = \@suffixed;
-
-  $request = $request->{methodCalls}
-    if $ENV{JMAP_TESTER_NO_WRAPPER} && _ARRAY0($input_request);
-
-  if ($self->_has_default_using && ! exists $request->{using}) {
-    $request->{using} = $self->default_using;
+    if ($self->_has_default_using && ! exists $request->{using}) {
+      $request->{using} = $self->default_using;
+    }
   }
 
   my $json = $self->json_encode($request);
