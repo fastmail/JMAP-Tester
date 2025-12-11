@@ -146,8 +146,8 @@ has json_codec => (
   default => sub {
     my ($self) = @_;
 
-    require JSON;
-    my $json = JSON->new->utf8->convert_blessed;
+    require JSON::XS;
+    my $json = JSON::XS->new->utf8->convert_blessed;
 
     if ($self->json_pretty) {
       $json = $json->pretty->canonical;
