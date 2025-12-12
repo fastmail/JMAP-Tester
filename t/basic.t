@@ -323,7 +323,18 @@ subtest "miscellaneous errors on 2-paragraph 2-sentence response" => sub {
   }
 
   {
+    # "The right thing", below, means "gives us the same sentence as we would
+    # get if we gave the name of that sentence as the arg to ->single.
+    my $p = $res_2->paragraph_by_client_id('xyzzy');
+    ok(
+      $p->single('welcome') == $p->single,
+      "para->single with no arg does the right thing",
+    );
+  }
+
+  {
     my $ok = eval {
+
       $res_2->paragraph_by_client_id('xyzzy')->single('welcome');
       $res_2->paragraph_by_client_id('a')->single('goodBye');
       1;
