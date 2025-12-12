@@ -701,16 +701,6 @@ sub download ($self, $uri_arg, $arg) {
   return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
-=method simple_auth
-
-  my $auth_struct = $tester->simple_auth($username, $password);
-
-This method respects the C<should_return_futures> attributes of the
-JMAP::Tester object, and in futures mode will return a future that will resolve
-to the Result.
-
-=cut
-
 sub _maybe_auth_header ($self) {
   return ($self->_access_token
           ? (Authorization => "Bearer " . $self->_access_token)
@@ -744,95 +734,6 @@ has _access_token => (
   is  => 'rw',
   init_arg => undef,
 );
-
-sub simple_auth ($self, $username, $password) {
-  # This is fatal, not a failure return, because it reflects the user screwing
-  # up, not a possible JMAP-related condition. -- rjbs, 2016-11-17
-  Carp::confess("can't simple_auth: no authentication_uri configured")
-    unless $self->has_authentication_uri;
-
-  my $start_json = $self->json_encode({
-    username      => $username,
-    clientName    => (ref $self),
-    clientVersion => $self->VERSION // '0',
-    deviceName    => 'JMAP Testing Client',
-  });
-
-  my $start_req = HTTP::Request->new(
-    POST => $self->authentication_uri,
-    [
-      'Content-Type' => 'application/json; charset=utf-8',
-      'Accept'       => 'application/json',
-    ],
-    $start_json,
-  );
-
-  my $start_res_f = $self->ua->request($self, $start_req, 'auth');
-
-  my $future = $start_res_f->then(sub {
-    my ($res) = @_;
-
-    unless ($res->code == 200) {
-      return Future->fail(
-        JMAP::Tester::Result::Failure->new({
-          ident         => 'failure in auth phase 1',
-          http_response => $res,
-        })
-      );
-    }
-
-    my $start_reply = $self->json_decode( $res->decoded_content );
-
-    unless (grep {; $_->{type} eq 'password' } @{ $start_reply->{methods} }) {
-      return Future->fail(
-        JMAP::Tester::Result::Failure->new({
-          ident         => "password is not an authentication method",
-          http_response => $res,
-        })
-      );
-    }
-
-    my $next_json = $self->json_encode({
-      loginId => $start_reply->{loginId},
-      type    => 'password',
-      value   => $password,
-    });
-
-    my $next_req = HTTP::Request->new(
-      POST => $self->authentication_uri,
-      [
-        'Content-Type' => 'application/json; charset=utf-8',
-        'Accept'       => 'application/json',
-      ],
-      $next_json,
-    );
-
-    return $self->ua->request($self, $next_req, 'auth');
-  })->then(sub {
-    my ($res) = @_;
-    unless ($res->code == 201) {
-      return Future->fail(
-        JMAP::Tester::Result::Failure->new({
-          ident         => 'failure in auth phase 2',
-          http_response => $res,
-        })
-      );
-    }
-
-    my $client_session = $self->json_decode( $res->decoded_content );
-
-    my $auth = JMAP::Tester::Result::Auth->new({
-      http_response   => $res,
-      client_session  => $client_session,
-    });
-
-    $self->configure_from_client_session($client_session);
-
-    return Future->done($auth);
-  });
-
-  return $self->should_return_futures ? $future : $future->$Failsafe->get;
-}
 
 =method get_client_session
 
