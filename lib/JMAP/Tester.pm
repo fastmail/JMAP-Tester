@@ -50,8 +50,8 @@ You use the test client like this:
   });
 
   my $response = $jtest->request([
-    [ getMailboxes => {} ],
-    [ getMessageUpdates => { sinceState => "123" } ],
+    [ 'Mailbox/get' => {} ],
+    [ 'Email/changes' => { sinceState => "123" } ],
   ]);
 
   # This returns two Paragraph objects if there are exactly two paragraphs.
@@ -60,8 +60,8 @@ You use the test client like this:
 
   # These get the single Sentence of each paragraph, asserting that there is
   # exactly one Sentence in each Paragraph, and that it's of the given type.
-  my $mbx = $mbx_p->single('mailboxes');
-  my $msg = $msg_p->single('messageUpdates');
+  my $mbx = $mbx_p->single('Mailbox/get');
+  my $msg = $msg_p->single('Email/changes');
 
   is( @{ $mbx->arguments->{list} }, 10, "we expect 10 mailboxes");
   ok( ! $msg->arguments->{hasMoreUpdates}, "we got all the msg updates needed");
