@@ -367,6 +367,33 @@ subtest "miscellaneous errors on 1-paragraph 2-sentence response" => sub {
   );
 };
 
+subtest "construction errors" => sub {
+  {
+    my $error = exception {
+      my $res_helper  = JMAP::Tester::Response->new({
+        items => [
+          [ welcome => { all => jstr('refugees') }, jstr('c1') ],
+          [ welcome => { all => jstr('homeless') }, jstr('c2') ],
+        ],
+      });
+
+      JMAP::Tester::Response::Paragraph->new({
+        sentences => [ $res_helper->sentence(0), $res_helper->sentence(1) ],
+      });
+    };
+
+    like($error, qr/non-uniform client_ids/, "paragraph cids must match");
+  };
+
+  {
+    my $error = exception {
+      JMAP::Tester::Response::Paragraph->new({ sentences => [] });
+    };
+
+    like($error, qr/0-sentence paragraph/, "paragraphs must have sentences");
+  };
+};
+
 subtest "interpreting HTTP responses" => sub {
   my $tester = JMAP::Tester->new;
 
