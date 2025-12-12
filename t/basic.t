@@ -298,6 +298,15 @@ subtest "miscellaneous error conditions on 1-paragraph 1-sentence response" => s
       "single_sentence checks name",
     );
   }
+
+  {
+    my $error = exception { $res_1->paragraph(0)->sentence_named(undef) };
+    like(
+      $error,
+      qr/no sentence name given/,
+      "paragraph->sentence_named needs defined arg",
+    );
+  }
 };
 
 subtest "miscellaneous errors on 2-paragraph 2-sentence response" => sub {
@@ -376,6 +385,12 @@ subtest "miscellaneous errors on 1-paragraph 2-sentence response" => sub {
     re('more than one sentence in paragraph'),
     "->single on multi-sentence paragraph",
   );
+
+  {
+    my $ok = eval { $res_3->paragraph(0)->assert_n_sentences(2); 1; };
+    my $error = $@;
+    ok($ok, "successful paragraph->assert_n_sentences") or diag $error;
+  }
 
   {
     my $error = exception { $res_3->paragraph(0)->assert_n_sentences(undef) };
