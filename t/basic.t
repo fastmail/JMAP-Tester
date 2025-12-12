@@ -332,6 +332,12 @@ subtest "miscellaneous errors on 2-paragraph 2-sentence response" => sub {
     my $error = $@;
     ok($ok, "paragraph_by_client_id") or diag $error;
   }
+
+  aborts_ok(
+    sub { $res_2->paragraph(0)->single('wilkommen') },
+    re('single sentence not of expected name'),
+    "paragraph->single with wrong name aborts",
+  );
 };
 
 subtest "miscellaneous errors on 1-paragraph 2-sentence response" => sub {

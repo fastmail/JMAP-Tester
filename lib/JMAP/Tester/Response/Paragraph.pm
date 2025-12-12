@@ -82,7 +82,7 @@ sub single ($self, $name = undef) {
   abort("more than one sentence in paragraph, but ->single called")
     if @sentences > 1;
 
-  Carp::confess("single sentence not of expected name <$name>")
+  abort("single sentence not of expected name <$name>")
     if defined $name && $name ne $sentences[0]->name;
 
   return $sentences[0];
