@@ -79,7 +79,7 @@ Otherwise, this method returns the sentence.
 sub single ($self, $name = undef) {
   my @sentences = $self->sentences;
 
-  Carp::confess("more than one sentence in set, but ->single called")
+  abort("more than one sentence in paragraph, but ->single called")
     if @sentences > 1;
 
   Carp::confess("single sentence not of expected name <$name>")
