@@ -365,6 +365,21 @@ subtest "miscellaneous errors on 1-paragraph 2-sentence response" => sub {
     re('more than one sentence in paragraph'),
     "->single on multi-sentence paragraph",
   );
+
+  {
+    my $error = exception { $res_3->paragraph(0)->assert_n_sentences(undef) };
+    like(
+      $error,
+      qr/no sentence count given/,
+      "assert_n_sentences needs defined arg",
+    );
+  }
+
+  aborts_ok(
+    sub { $res_3->paragraph(0)->assert_n_sentences(8) },
+    re("expected 8 sentences but got 2"),
+    "assert_n_sentences aborts on count mismatch",
+  );
 };
 
 subtest "construction errors" => sub {
