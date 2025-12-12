@@ -119,7 +119,7 @@ exists, or if two sentences with the name exist, the tester will abort.
 =cut
 
 sub sentence_named ($self, $name) {
-  Carp::confess("no name given") unless defined $name;
+  Carp::confess("no sentence name given") unless defined $name;
 
   my @sentences = grep {; $_->name eq $name } $self->sentences;
 
