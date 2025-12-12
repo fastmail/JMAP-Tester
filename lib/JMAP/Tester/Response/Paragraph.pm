@@ -1,8 +1,9 @@
-use v5.14.0;
+use v5.20.0;
 package JMAP::Tester::Response::Paragraph;
 # ABSTRACT: a group of sentences in a JMAP response
 
 use Moo;
+use experimental 'signatures';
 
 use JMAP::Tester::Abort 'abort';
 
@@ -24,8 +25,7 @@ matching client ids.
 
 =cut
 
-sub client_id {
-  my ($self) = @_;
+sub client_id ($self) {
   $self->_sentences->[0]->client_id;
 }
 
@@ -48,7 +48,7 @@ in the paragraph.
 
 =cut
 
-sub sentences { @{ $_[0]->_sentences } }
+sub sentences ($self) { @{ $self->_sentences } }
 
 =method sentence
 
@@ -58,8 +58,7 @@ This method returns the I<n>th sentence of the paragraph.
 
 =cut
 
-sub sentence {
-  my ($self, $n) = @_;
+sub sentence ($self, $n) {
   abort("there is no sentence for index $n")
     unless $self->_sentences->[$n];
 }
@@ -77,9 +76,7 @@ Otherwise, this method returns the sentence.
 
 =cut
 
-sub single {
-  my ($self, $name) = @_;
-
+sub single ($self, $name = undef) {
   my @sentences = $self->sentences;
 
   Carp::confess("more than one sentence in set, but ->single called")
@@ -100,9 +97,7 @@ exactly C<$n>.  Otherwise, it aborts.
 
 =cut
 
-sub assert_n_sentences {
-  my ($self, $n) = @_;
-
+sub assert_n_sentences ($self, $n) {
   Carp::confess("no sentence count given") unless defined $n;
 
   my @sentences = $self->sentences;
@@ -123,9 +118,7 @@ exists, or if two sentences with the name exist, the tester will abort.
 
 =cut
 
-sub sentence_named {
-  my ($self, $name) = @_;
-
+sub sentence_named ($self, $name) {
   Carp::confess("no name given") unless defined $name;
 
   my @sentences = grep {; $_->name eq $name } $self->sentences;
@@ -151,12 +144,12 @@ JSON types.
 
 =cut
 
-sub as_triples {
-  [ map {; $_->as_triple } $_[0]->sentences ]
+sub as_triples ($self) {
+  [ map {; $_->as_triple } $self->sentences ]
 }
 
-sub as_stripped_triples {
-  [ map {; $_->as_stripped_triple } $_[0]->sentences ]
+sub as_stripped_triples ($self) {
+  [ map {; $_->as_stripped_triple } $self->sentences ]
 }
 
 =method as_pairs
@@ -166,12 +159,12 @@ on each sentence in the paragraph. C<as_stripped_pairs> removes JSON types.
 
 =cut
 
-sub as_pairs {
-  [ map {; $_->as_pair } $_[0]->sentences ]
+sub as_pairs ($self) {
+  [ map {; $_->as_pair } $self->sentences ]
 }
 
-sub as_stripped_pairs {
-  [ map {; $_->as_stripped_pair } $_[0]->sentences ]
+sub as_stripped_pairs ($self) {
+  [ map {; $_->as_stripped_pair } $self->sentences ]
 }
 
 1;

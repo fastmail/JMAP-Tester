@@ -1,10 +1,12 @@
-use v5.14.0;
+use v5.20.0;
 use warnings;
 
 package JMAP::Tester::UA::Test;
 
 use Moo;
 with 'JMAP::Tester::Role::UA';
+
+use experimental 'signatures';
 
 use Carp ();
 use Future;
@@ -28,15 +30,12 @@ has _transactions => (
   clearer  => 'clear_transactions',
 );
 
-sub transactions {
-  my ($self) = @_;
+sub transactions ($self) {
   return $self->_transactions->@*;
 }
 
-sub request {
-  my ($self, $tester, $req, $log_type, $log_extra) = @_;
-
-  my $res = $self->request_handler->(@_);
+sub request ($self, $tester, $req, $log_type, $log_extra = undef) {
+  my $res = $self->request_handler->($self, $tester, $req, $log_type, $log_extra);
 
   my $logger = $tester->_logger;
   my $log_method = "log_" . ($log_type // 'jmap') . '_request';

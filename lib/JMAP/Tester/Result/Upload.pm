@@ -1,10 +1,12 @@
-use v5.14.0;
+use v5.20.0;
 
 package JMAP::Tester::Result::Upload;
 # ABSTRACT: what you get when you upload a blob
 
 use Moo;
 with 'JMAP::Tester::Role::HTTPResult';
+
+use experimental 'signatures';
 
 use namespace::clean;
 
@@ -38,9 +40,9 @@ has payload => (
   is => 'ro',
 );
 
-sub blob_id { $_[0]->payload->{blobId}  }
-sub blobId  { $_[0]->payload->{blobId}  }
-sub type    { $_[0]->payload->{type}    }
-sub size    { $_[0]->payload->{size}    }
+sub blob_id ($self) { $self->payload->{blobId}  }
+sub blobId  ($self) { $self->payload->{blobId}  }
+sub type    ($self) { $self->payload->{type}    }
+sub size    ($self) { $self->payload->{size}    }
 
 1;

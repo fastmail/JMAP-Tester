@@ -1,10 +1,12 @@
-use v5.14.0;
-use warnings;
-
 package JMAP::Tester;
 # ABSTRACT: a JMAP client made for testing JMAP servers
 
+use v5.20.0;
+use warnings;
+
 use Moo;
+
+use experimental 'signatures';
 
 use Crypt::Misc qw(decode_b64u encode_b64u);
 use Crypt::Mac::HMAC qw(hmac_b64u);
@@ -156,9 +158,7 @@ has json_codec => (
   },
 );
 
-sub json_encode {
-  my ($self, $data) = @_;
-
+sub json_encode ($self, $data) {
   if ($data->$_isa('JMAP::Tester::JSONLiteral')) {
     return $data->bytes;
   }
@@ -189,9 +189,7 @@ has _json_typist => (
   },
 );
 
-sub apply_json_types {
-  my ($self, $data) = @_;
-
+sub apply_json_types ($self, $data) {
   return $data unless $self->use_json_typist;
   return $self->_json_typist->apply_types($data);
 }
@@ -285,9 +283,9 @@ has _accounts => (
   predicate => '_has_accounts',
 );
 
-sub accounts {
-  return unless $_[0]->_has_accounts;
-  return %{ $_[0]->_accounts }
+sub accounts ($self) {
+  return unless $self->_has_accounts;
+  return %{ $self->_accounts }
 }
 
 =method primary_account_for
@@ -306,8 +304,7 @@ has _primary_accounts => (
   predicate => '_has_primary_accounts',
 );
 
-sub primary_account_for {
-  my ($self, $using) = @_;
+sub primary_account_for ($self, $using) {
   return unless $self->_has_primary_accounts;
   return $self->_primary_accounts->{ $using };
 }
@@ -347,9 +344,7 @@ to the Result.
 
 =cut
 
-sub request {
-  my ($self, $input_request) = @_;
-
+sub request ($self, $input_request) {
   Carp::confess("can't perform request: no api_uri configured")
     unless $self->has_api_uri;
 
@@ -450,9 +445,7 @@ sub munge_method_triple {}
 
 sub response_class { 'JMAP::Tester::Response' }
 
-sub _jresponse_from_hresponse {
-  my ($self, $http_res) = @_;
-
+sub _jresponse_from_hresponse ($self, $http_res) {
   # TODO check that it's really application/json!
   my $json = $http_res->decoded_content;
 
@@ -524,8 +517,7 @@ to the Result.
 
 =cut
 
-sub upload {
-  my ($self, $arg) = @_;
+sub upload ($self, $arg) {
   # TODO: support blob as handle or sub -- rjbs, 2016-11-17
 
   my $uri = $self->upload_uri;
@@ -622,14 +614,11 @@ to the Result.
 
 my %DL_DEFAULT = (name => 'download');
 
-sub _jwt_sub_param_from_uri {
-  my ($self, $to_sign) = @_;
+sub _jwt_sub_param_from_uri ($self, $to_sign) {
   "$to_sign";
 }
 
-sub download_uri_for {
-  my ($self, $arg) = @_;
-
+sub download_uri_for ($self, $arg) {
   Carp::confess("can't compute download URI without configured download_uri")
     unless my $uri = $self->download_uri;
 
@@ -680,9 +669,7 @@ sub download_uri_for {
   return $uri;
 }
 
-sub download {
-  my ($self, $uri_arg, $arg) = @_;
-
+sub download ($self, $uri_arg, $arg) {
   my $uri = $self->download_uri_for($uri_arg);
 
   my $get = HTTP::Request->new(
@@ -724,8 +711,7 @@ to the Result.
 
 =cut
 
-sub _maybe_auth_header {
-  my ($self) = @_;
+sub _maybe_auth_header ($self) {
   return ($self->_access_token
           ? (Authorization => "Bearer " . $self->_access_token)
           : ());
@@ -744,8 +730,7 @@ sub _now_timestamp {
     $hour, $min, $sec;
 }
 
-sub _get_jwt_config {
-  my ($self) = @_;
+sub _get_jwt_config ($self) {
   return unless my $jwtc = $self->_jwt_config;
   return $jwtc unless $jwtc->{signingKeyValidUntil};
   return $jwtc if $jwtc->{signingKeyValidUntil} gt $self->_now_timestamp;
@@ -760,9 +745,7 @@ has _access_token => (
   init_arg => undef,
 );
 
-sub simple_auth {
-  my ($self, $username, $password) = @_;
-
+sub simple_auth ($self, $username, $password) {
   # This is fatal, not a failure return, because it reflects the user screwing
   # up, not a possible JMAP-related condition. -- rjbs, 2016-11-17
   Carp::confess("can't simple_auth: no authentication_uri configured")
@@ -864,9 +847,7 @@ to the L<JMAP::Tester::Result::Auth> object.
 
 =cut
 
-sub _get_client_session_future {
-  my ($self, $auth_uri) = @_;
-
+sub _get_client_session_future ($self, $auth_uri = undef) {
   $auth_uri //= $self->authentication_uri;
 
   my $auth_req = HTTP::Request->new(
@@ -900,8 +881,7 @@ sub _get_client_session_future {
   });
 }
 
-sub get_client_session {
-  my ($self, $auth_uri) = @_;
+sub get_client_session ($self, $auth_uri = undef) {
   my $future = $self->_get_client_session_future($auth_uri);
   return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
@@ -920,9 +900,7 @@ to the Result.
 
 =cut
 
-sub update_client_session {
-  my ($self, $auth_uri) = @_;
-
+sub update_client_session ($self, $auth_uri = undef) {
   my $future = $self->_get_client_session_future($auth_uri)->then(sub {
     my ($auth) = @_;
 
@@ -944,9 +922,7 @@ method is used internally when logging in.
 
 =cut
 
-sub configure_from_client_session {
-  my ($self, $client_session) = @_;
-
+sub configure_from_client_session ($self, $client_session) {
   # It's not crazy to think that we'd also try to pull the primary accountId
   # out of the accounts in the auth struct, but I don't think there's a lot to
   # gain by doing that yet.  Maybe later we'd use it to set the default
@@ -999,9 +975,7 @@ to the Result.
 
 =cut
 
-sub logout {
-  my ($self) = @_;
-
+sub logout ($self) {
   # This is fatal, not a failure return, because it reflects the user screwing
   # up, not a possible JMAP-related condition. -- rjbs, 2017-02-10
   Carp::confess("can't logout: no authentication_uri configured")
@@ -1057,9 +1031,7 @@ to the L<HTTP::Response>.
 
 =cut
 
-sub http_request {
-  my ($self, $http_request) = @_;
-
+sub http_request ($self, $http_request) {
   my $future = $self->ua->request($self, $http_request, 'misc');
   return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
@@ -1073,9 +1045,7 @@ the given URL.  C<$headers> is an optional arrayref of headers.
 
 =cut
 
-sub http_get {
-  my ($self, $url, $headers) = @_;
-
+sub http_get ($self, $url, $headers = undef) {
   my $req = HTTP::Request->new(
     GET => $url,
     (defined $headers ? $headers : ()),
@@ -1093,9 +1063,7 @@ byte string to be passed as the body.
 
 =cut
 
-sub http_post {
-  my ($self, $url, $body, $headers) = @_;
-
+sub http_post ($self, $url, $body, $headers = undef) {
   my $req = HTTP::Request->new(
     POST => $url,
     $headers // [],
