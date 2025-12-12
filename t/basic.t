@@ -353,6 +353,12 @@ subtest "miscellaneous errors on 1-paragraph 2-sentence response" => sub {
     re('found more than one sentence with name "welcome"'),
     "ambiguous by name",
   );
+
+  aborts_ok(
+    sub { $res_3->paragraph(0)->single },
+    re('more than one sentence in paragraph'),
+    "->single on multi-sentence paragraph",
+  );
 };
 
 subtest "interpreting HTTP responses" => sub {
