@@ -283,17 +283,10 @@ subtest "calling as_set on non-set sentence" => sub {
   );
 };
 
-subtest "miscellaneous error conditions" => sub {
+subtest "miscellaneous error conditions on 1-paragraph 1-sentence response" => sub {
   my $res_1 = JMAP::Tester::Response->new({
     items => [
       [ welcome => { all => jstr('refugees') }, jstr('xyzzy') ],
-    ],
-  });
-
-  my $res_2 = JMAP::Tester::Response->new({
-    items => [
-      [ welcome => { all  => jstr('refugees') }, jstr('xyzzy') ],
-      [ goodBye => { blue => jstr('skye') }, jstr('a') ],
     ],
   });
 
@@ -305,6 +298,15 @@ subtest "miscellaneous error conditions" => sub {
       "single_sentence checks name",
     );
   }
+};
+
+subtest "miscellaneous errors on 2-paragraph 2-sentence response" => sub {
+  my $res_2 = JMAP::Tester::Response->new({
+    items => [
+      [ welcome => { all  => jstr('refugees') }, jstr('xyzzy') ],
+      [ goodBye => { blue => jstr('skye') }, jstr('a') ],
+    ],
+  });
 
   {
     my $error = exception { $res_2->single_sentence('foo') };
@@ -330,7 +332,9 @@ subtest "miscellaneous error conditions" => sub {
     my $error = $@;
     ok($ok, "paragraph_by_client_id") or diag $error;
   }
+};
 
+subtest "miscellaneous errors on 1-paragraph 2-sentence response" => sub {
   my $res_3 = JMAP::Tester::Response->new({
     items => [
       [ welcome => { all => jstr('refugees') }, jstr('xyzzy') ],
