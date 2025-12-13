@@ -106,4 +106,21 @@ subtest "bogus use of json_literal" => sub {
   unlike($echoed_args->{echo}{methodCalls}[0][1]{arg}, qr/not appear/, "we lost requested literal");
 };
 
+subtest "downloading blobs" => sub {
+  my $download = $tester->download({
+    accountId => $tester->primary_account_for("urn:ietf:params:jmap:mail"),
+    blobId    => "xyzzy",
+    type      => 'text/subtext',
+    name      => "download.sbt",
+  });
+
+  isa_ok($download, 'JMAP::Tester::Result::Download');
+
+  is(
+    $download->bytes_ref->$*,
+    "The blob you requested was xyzzy for ac1234.",
+    "blob download content as expected",
+  );
+};
+
 done_testing;
