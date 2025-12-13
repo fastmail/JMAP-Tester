@@ -6,15 +6,15 @@ package JMAP::Tester::UA::LWP;
 use Moo;
 with 'JMAP::Tester::Role::UA';
 
+use experimental 'signatures';
+
 use Carp ();
 use Future;
 
 has lwp => (
   is   => 'ro',
   lazy => 1,
-  default => sub {
-    my ($self) = @_;
-
+  default => sub ($self) {
     require LWP::UserAgent;
     my $lwp = LWP::UserAgent->new(keep_alive => 1);
     $lwp->cookie_jar({});
@@ -29,9 +29,7 @@ has lwp => (
   },
 );
 
-sub set_cookie {
-  my ($self, $arg) = @_;
-
+sub set_cookie ($self, $arg) {
   for (qw(api_uri name value)) {
     Carp::confess("can't set_cookie without $_") unless $arg->{$_};
   }
@@ -53,27 +51,20 @@ sub set_cookie {
   );
 }
 
-sub scan_cookies {
-  my ($self, $callback) = @_;
+sub scan_cookies ($self, $callback) {
   return $self->lwp->cookie_jar->scan($callback);
 }
 
-sub get_default_header {
-  my ($self, $name) = @_;
-
+sub get_default_header ($self, $name) {
   return scalar $self->lwp->default_header($name);
 }
 
-sub set_default_header {
-  my ($self, $name, $value) = @_;
-
+sub set_default_header ($self, $name, $value) {
   $self->lwp->default_header($name, $value);
   return;
 }
 
-sub request {
-  my ($self, $tester, $req, $log_type, $log_extra) = @_;
-
+sub request ($self, $tester, $req, $log_type, $log_extra = undef) {
   Carp::cluck("something very strange happened") unless $tester->can('_logger');
   my $logger = $tester->_logger;
 

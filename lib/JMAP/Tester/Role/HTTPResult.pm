@@ -1,4 +1,4 @@
-use v5.14.0;
+use v5.20.0;
 use warnings;
 package JMAP::Tester::Role::HTTPResult;
 # ABSTRACT: the kind of thing that you get back for an http request
@@ -6,6 +6,8 @@ package JMAP::Tester::Role::HTTPResult;
 use Moo::Role;
 
 with 'JMAP::Tester::Role::Result';
+
+use experimental 'signatures';
 
 =head1 OVERVIEW
 
@@ -29,9 +31,7 @@ but other result types may exist that don't have an http_response...
 
 =cut
 
-sub response_payload {
-  my ($self) = @_;
-
+sub response_payload ($self) {
   return $self->http_response ? $self->http_response->as_string : '';
 }
 
