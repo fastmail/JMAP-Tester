@@ -106,8 +106,25 @@ sub _handle_download_req ($req) {
   ];
 }
 
-sub _handle_upload_req {
-  Carp::confess("upload not yet implemented");
+sub _handle_upload_req ($req) {
+  my (undef, undef, undef, $account_id) = split m{/}, $req->path_info;
+
+  my $content = $req->raw_body;
+  my $length  = length $content;
+  my $blob_id = substr($content, 0, 1) . q{-} . $length; # Whatever.
+
+  my $result = {
+    accountId => $account_id,
+    blobId    => $blob_id,
+    type      => scalar $req->header('Content-Type'),
+    size      => $length,
+  };
+
+  return [
+    200,
+    [ 'Content-Type' => 'application/json' ],
+    [ JSON::XS->new->encode($result) ]
+  ];
 }
 
 sub _handle_session_req ($req) {
