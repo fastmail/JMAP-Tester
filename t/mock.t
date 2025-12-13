@@ -7,42 +7,33 @@ use JMAP::Tester;
 use JMAP::Tester::Sugar qw(json_literal);
 use JSON::Typist 0.005; # $typist->number
 
-use HTTP::Response;
 use LWP::Protocol::PSGI;
-use Plack::Request;
 use Test::Deep ':v1';
 use Test::Deep::JType 0.005; # jstr() in both want and have
 use Test::More;
 use Test::Abortable 'subtest';
 
-my $api_uri   = 'http://localhost:5627/jmap';
-my $psgi_app  = sub ($env) {
-  my $req   = Plack::Request->new($env);
-  my $body  = $req->raw_body;
-  my $data  = JSON::XS->new->decode($body);
+use lib 't/lib';
+use JMAP::Tester::MockServer;
 
-  return [
-    200,
-    [
-      'Content-Type' => 'application/json; charset=utf-8',
-      'Mock-Server'  => 'gorp/1.23',
-    ],
-    [
-      JSON::XS->new->encode({
-        methodResponses => [
-          [ 'Fake/one', { f => 1 }, 'a' ],
-          [ 'Fake/echo', { echo => $data }, 'c' ],
-        ],
-      }),
-    ]
-  ];
-};
-
-LWP::Protocol::PSGI->register($psgi_app, host => 'localhost:5627');
+JMAP::Tester::MockServer->register_handler;
 
 my $tester = JMAP::Tester->new({
-  api_uri => $api_uri,
+  authentication_uri => JMAP::Tester::MockServer->authentication_uri,
 });
+
+subtest "getting the session" => sub {
+  my $auth = $tester->update_client_session;
+  isa_ok($auth, 'JMAP::Tester::Result::Auth');
+  jcmp_deeply(
+    $auth->client_session,
+    superhashof({
+      accounts => { ac1234 => superhashof({}) },
+      username => 'tester@example.com',
+    }),
+    "we got the session",
+  );
+};
 
 my @cases = (
   [ "from Perl struct"  => [[ 'Shine/get', { clean => 1 } ]] ],
