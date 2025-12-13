@@ -25,6 +25,8 @@ my $tester = JMAP::Tester->new({
 subtest "getting the session" => sub {
   my $auth = $tester->update_client_session;
   isa_ok($auth, 'JMAP::Tester::Result::Auth');
+  ok($auth->is_success, "successful auth is successful");
+
   jcmp_deeply(
     $auth->client_session,
     superhashof({
@@ -33,6 +35,34 @@ subtest "getting the session" => sub {
     }),
     "we got the session",
   );
+
+  jcmp_deeply(
+    { $tester->accounts },
+    { ac1234 => superhashof({}) },
+    "the tester, now configured, has accounts",
+  );
+
+  jcmp_deeply(
+    $tester->primary_account_for("urn:ietf:params:jmap:mail"),
+    'ac1234',
+    "primary account for mail is correct",
+  );
+
+  jcmp_deeply(
+    $tester->primary_account_for("urn:ietf:params:jmap:gopher"),
+    undef,
+    "we get under for types w/o primary accounts",
+  );
+
+  my $auth_reget = $tester->get_client_session;
+  jcmp_deeply(
+    $auth_reget->client_session,
+    $auth->client_session,
+    "regotten session is the same as the original",
+  );
+
+  my $auth_failure = $tester->get_client_session($tester->api_uri);
+  ok(!$auth_failure->is_success, "failed auth get is not successful");
 };
 
 my @cases = (
