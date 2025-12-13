@@ -94,8 +94,16 @@ sub _psgi_app ($env) {
         :                                        _error(404);
 }
 
-sub _handle_download_req {
-  Carp::confess("download not yet implemented");
+sub _handle_download_req ($req) {
+  my (undef, undef, undef, $accountid, $blob_id, $name) = split m{/}, $req->path_info;
+  return [
+    200,
+    [
+      'Content-Type' => $req->parameters->{type},
+      'Content-Disposition' => qq{attachment; filename="$name"},
+    ],
+    [ "The blob you requested was $blob_id for $accountid." ],
+  ];
 }
 
 sub _handle_upload_req {

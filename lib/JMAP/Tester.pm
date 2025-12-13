@@ -669,7 +669,9 @@ sub download_uri_for ($self, $arg) {
   return $uri;
 }
 
-sub download ($self, $uri_arg, $arg) {
+sub download ($self, $uri_arg, $arg = undef) {
+  $arg //= {};
+
   my $uri = $self->download_uri_for($uri_arg);
 
   my $get = HTTP::Request->new(
