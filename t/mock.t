@@ -23,7 +23,10 @@ my $psgi_app  = sub ($env) {
 
   return [
     200,
-    [ 'Content-Type' => 'application/json; charset=utf-8' ],
+    [
+      'Content-Type' => 'application/json; charset=utf-8',
+      'Mock-Server'  => 'gorp/1.23',
+    ],
     [
       JSON::XS->new->encode({
         methodResponses => [
@@ -62,6 +65,12 @@ for my $case (@cases) {
       $res->sentence(1)->arguments->{echo},
       superhashof({ methodCalls => [[ 'Shine/get', { clean => 1 }, jstr() ]] }),
       "second args correct",
+    );
+
+    like(
+      $res->response_payload,
+      qr{^Mock-Server: gorp/1\.23$}m,
+      "http req stringifies in response"
     );
   };
 }
