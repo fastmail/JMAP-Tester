@@ -123,4 +123,20 @@ subtest "downloading blobs" => sub {
   );
 };
 
+subtest "uploading blobs" => sub {
+  my $upload = $tester->upload({
+    accountId => $tester->primary_account_for("urn:ietf:params:jmap:mail"),
+    blob      => \"This is an upload.", # 18 bytes
+    type      => 'text/plane',
+  });
+
+  isa_ok($upload, 'JMAP::Tester::Result::Upload');
+  ok($upload->is_success, "successful upload is successful");
+
+  is($upload->blobId,  "T-18",        "got the blob id we expect (blobId)");
+  is($upload->blob_id, "T-18",        "got the blob id we expect (blob_id)");
+  is($upload->type,    "text/plane",  "got the type we expect");
+  is($upload->size,    18,            "got the size we expect");
+};
+
 done_testing;
