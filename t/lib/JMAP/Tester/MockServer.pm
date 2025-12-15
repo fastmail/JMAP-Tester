@@ -6,6 +6,7 @@ use warnings;
 use experimental 'signatures';
 
 use JSON::Typist 0.005; # $typist->number
+use JSON::XS;
 
 use LWP::Protocol::PSGI;
 use Plack::Request;
