@@ -1,4 +1,4 @@
-use v5.14.0;
+use v5.20.0;
 
 package JMAP::Tester::Result::Auth;
 # ABSTRACT: what you get when you authenticate
