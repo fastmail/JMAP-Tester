@@ -5,6 +5,8 @@ use Moo;
 
 use namespace::clean;
 
+use experimental 'signatures';
+
 my %counter;
 
 sub _log_generic ($self, $tester, $type, $thing) {
