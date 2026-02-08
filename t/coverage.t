@@ -103,7 +103,7 @@ subtest "assert_no_errors" => sub {
   }
 
   # When the set response has none of the standard fields at all, we should
-  # still be okay. -- rjbs, 2025-02-08
+  # still be okay. -- claude, 2025-02-08
   {
     my $res = JMAP::Tester::Response->new({
       items => [
