@@ -15,7 +15,7 @@ use Test::Fatal;
 use Test::More;
 use Test::Abortable 'subtest';
 
-subtest "set sentence accessors" => sub {
+subtest "test accessors on Sentence::Set" => sub {
   my $res = JMAP::Tester::Response->new({
     items => [
       [
@@ -23,19 +23,19 @@ subtest "set sentence accessors" => sub {
           oldState => jstr('state-1'),
           newState => jstr('state-2'),
           created  => {
-            'cr-0' => { id => 'x100', size => jnum(42) },
-            'cr-1' => { id => 'x101', size => jnum(13) },
+            cr0 => { id => 'x100', size => jnum(42) },
+            cr1 => { id => 'x101', size => jnum(13) },
           },
           updated    => { 'x200' => undef, 'x201' => { color => 'red' } },
           destroyed  => [ 'x300', 'x301' ],
           notCreated   => {
-            'cr-2' => { type => jstr('invalidProperties') },
+            cr2 => { type => jstr('invalidProperties') },
           },
           notUpdated   => {
-            'x202' => { type => jstr('notFound') },
+            x202 => { type => jstr('notFound') },
           },
           notDestroyed => {
-            'x302' => { type => jstr('notFound') },
+            x302 => { type => jstr('notFound') },
           },
         },
         'a',
@@ -50,87 +50,92 @@ subtest "set sentence accessors" => sub {
 
   is($s->as_set, $s, "as_set on a Set is identity");
 
-  is(ref $s->created, 'HASH',     "created is a hashref");
-  is(keys %{ $s->created }, 2,    "two created entries");
-  is($s->created_id('cr-0'), 'x100', "created_id cr-0");
-  is($s->created_id('cr-1'), 'x101', "created_id cr-1");
+  jcmp_deeply(
+    $s->created,
+    { cr0 => superhashof({}), cr1 => superhashof({}) },
+    "created gets us back the created hashref",
+  );
+
+  is($s->created_id('cr0'), 'x100', "created_id cr-0");
+  is($s->created_id('cr1'), 'x101', "created_id cr-1");
   is($s->created_id('cr-nope'), undef, "created_id for unknown");
 
-  is_deeply([ sort $s->created_creation_ids ], [ 'cr-0', 'cr-1' ],
-    "created_creation_ids");
+  jcmp_deeply(
+    [ $s->created_creation_ids ],
+    bag(qw( cr0 cr1 )),
+    "created_creation_ids"
+  );
 
-  is_deeply([ sort $s->created_ids ], [ 'x100', 'x101' ], "created_ids");
-  is_deeply([ sort $s->updated_ids ], [ 'x200', 'x201' ], "updated_ids");
-  is_deeply([ sort $s->destroyed_ids ], [ 'x300', 'x301' ], "destroyed_ids");
+  jcmp_deeply([ $s->created_ids ],   bag(qw(x100 x101)), "created_ids");
+  jcmp_deeply([ $s->updated_ids ],   bag(qw(x200 x201)), "updated_ids");
+  jcmp_deeply([ $s->destroyed_ids ], bag(qw(x300 x301)), "destroyed_ids");
 
-  is_deeply([ $s->not_created_ids ],   [ 'cr-2' ], "not_created_ids");
-  is_deeply([ $s->not_updated_ids ],   [ 'x202' ], "not_updated_ids");
-  is_deeply([ $s->not_destroyed_ids ], [ 'x302' ], "not_destroyed_ids");
+  jcmp_deeply([ $s->not_created_ids ],   bag('cr2' ), "not_created_ids");
+  jcmp_deeply([ $s->not_updated_ids ],   bag('x202'), "not_updated_ids");
+  jcmp_deeply([ $s->not_destroyed_ids ], bag('x302'), "not_destroyed_ids");
 
-  is_deeply(
+  jcmp_deeply(
     $s->create_errors,
-    { 'cr-2' => { type => jstr('invalidProperties') } },
+    { cr2 => { type => jstr('invalidProperties') } },
     "create_errors",
   );
 
-  is_deeply(
+  jcmp_deeply(
     $s->update_errors,
-    { 'x202' => { type => jstr('notFound') } },
+    { x202 => { type => jstr('notFound') } },
     "update_errors",
   );
 
-  is_deeply(
+  jcmp_deeply(
     $s->destroy_errors,
-    { 'x302' => { type => jstr('notFound') } },
+    { x302 => { type => jstr('notFound') } },
     "destroy_errors",
   );
 };
 
-subtest "assert_no_errors" => sub {
-  {
-    my $res = JMAP::Tester::Response->new({
-      items => [
-        [ 'Widget/set' => {
-            created   => { 'cr-0' => { id => 'x100' } },
-            updated   => { 'x200' => undef },
-            destroyed => [ 'x300' ],
-          }, 'a' ],
-      ],
-    });
-
-    my $s = $res->single_sentence('Widget/set')->as_set;
-    is($s->assert_no_errors, $s, "returns self when clean");
-  }
-
+subtest "test accessors on Sentence::Set with omitted arguments" => sub {
   # When the set response has none of the standard fields at all, we should
   # still be okay. -- claude, 2025-02-08
-  {
-    my $res = JMAP::Tester::Response->new({
-      items => [
-        [ 'Thing/set' => { newState => 'state-3' }, 'a' ],
-      ],
-    });
+  my $res = JMAP::Tester::Response->new({
+    items => [
+      [ 'Thing/set' => { newState => 'state-3' }, 'a' ],
+    ],
+  });
 
-    my $s = $res->single_sentence('Thing/set')->as_set;
+  my $s = $res->single_sentence('Thing/set')->as_set;
 
-    is_deeply($s->created,        {}, "created defaults to {}");
-    is_deeply($s->create_errors,  {}, "create_errors defaults to {}");
-    is_deeply($s->update_errors,  {}, "update_errors defaults to {}");
-    is_deeply($s->destroy_errors, {}, "destroy_errors defaults to {}");
+  jcmp_deeply($s->created,        {}, "created defaults to {}");
+  jcmp_deeply($s->create_errors,  {}, "create_errors defaults to {}");
+  jcmp_deeply($s->update_errors,  {}, "update_errors defaults to {}");
+  jcmp_deeply($s->destroy_errors, {}, "destroy_errors defaults to {}");
 
-    is($s->created_id('anything'), undef, "created_id on empty");
-    is_deeply([ $s->created_creation_ids ], [], "no created_creation_ids");
-    is_deeply([ $s->created_ids ], [], "no created_ids");
+  is($s->created_id('anything'), undef, "created_id with bogus input yields undef");
+  jcmp_deeply([ $s->created_creation_ids ], [], "no created_creation_ids");
+  jcmp_deeply([ $s->created_ids ], [], "no created_ids");
 
-    is($s->assert_no_errors, $s, "returns self with no error fields at all");
-  }
+  is($s->assert_no_errors, $s, "returns self with no error fields at all");
+};
+
+subtest "assert_no_errors" => sub {
+  my $res = JMAP::Tester::Response->new({
+    items => [
+      [ 'Widget/set' => {
+          created   => { cr0 => { id => 'x100' } },
+          updated   => { x200 => undef },
+          destroyed => [ 'x300' ],
+        }, 'a' ],
+    ],
+  });
+
+  my $s = $res->single_sentence('Widget/set')->as_set;
+  is($s->assert_no_errors, $s, "returns self when clean");
 };
 
 subtest "assert_successful and friends" => sub {
   my $ok_res = JMAP::Tester::Response->new({
     items => [
       [ 'Widget/set' => {
-          created   => { 'cr-0' => { id => 'x1' } },
+          created   => { cr0 => { id => 'x1' } },
           updated   => {},
           destroyed => [],
         }, 'a' ],
@@ -163,10 +168,7 @@ subtest "assert_successful and friends" => sub {
     ok(! $fail->is_success, "failure is not success");
 
     my $err = exception { $fail->assert_successful };
-    ok(
-      blessed($err) && $err->isa('JMAP::Tester::Abort'),
-      "assert_successful throws Abort on failure",
-    );
+    isa_ok($err, 'JMAP::Tester::Abort', "assert_successful's throw");
     like($err->message, qr/JMAP failure/, "default message for ident-less failure");
   }
 
@@ -180,10 +182,7 @@ subtest "assert_successful and friends" => sub {
     is($fail->ident, "custom error ident", "ident value");
 
     my $err = exception { $fail->assert_successful };
-    ok(
-      blessed($err) && $err->isa('JMAP::Tester::Abort'),
-      "assert_successful throws Abort on identified failure",
-    );
+    isa_ok($err, 'JMAP::Tester::Abort', "assert_successful's throw");
     like($err->message, qr/custom error ident/, "abort message uses ident");
   }
 };
@@ -198,12 +197,15 @@ subtest "response_payload" => sub {
       ),
     });
 
-    like($fail->response_payload, qr/something went wrong/,
-      "response_payload includes body");
+    like(
+      $fail->response_payload,
+      qr/something went wrong/,
+      "response_payload includes body"
+    );
   }
 
   {
-    my $fail = JMAP::Tester::Result::Failure->new({});
+    my $fail = JMAP::Tester::Result::Failure->new;
     is($fail->response_payload, '', "no http_response means empty payload");
   }
 };
