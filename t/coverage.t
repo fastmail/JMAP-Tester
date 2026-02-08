@@ -331,41 +331,4 @@ subtest "Logger::Null" => sub {
   }
 };
 
-sub aborts_ok {
-  my ($code, $want, $desc);
-  if (@_ == 2) {
-    ($code, $desc) = @_;
-  } elsif (@_ == 3) {
-    ($code, $want, $desc) = @_;
-  } else {
-    Carp::confess("aborts_ok used wrongly");
-  }
-
-  local $Test::Builder::Level = $Test::Builder::Level + 1;
-  my $ok = eval { $code->(); 1 };
-  my $error = $@;
-
-  if ($ok) {
-    fail("code ran without exception: $desc");
-    return;
-  }
-
-  unless (blessed $error && $error->isa('JMAP::Tester::Abort')) {
-    fail("code threw non-abort: $desc");
-    diag("error thrown: $error");
-    return;
-  }
-
-  unless ($want) {
-    pass("got an abort: $desc");
-    return;
-  }
-
-  cmp_deeply(
-    $error,
-    $want,
-    "got expected abort: $desc",
-  );
-}
-
 done_testing;
