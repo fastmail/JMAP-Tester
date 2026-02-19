@@ -36,10 +36,15 @@ use namespace::clean;
 =head1 OVERVIEW
 
 A JMAP::Tester::Response object represents the successful response to a JMAP
-call.  It is a successful L<JMAP::Tester::Result>.
+request -- the kind where you've POSTed a JSON object with C<methodCalls>.  It
+is a successful L<JMAP::Tester::Role::Result>.
 
 A Response is used mostly to contain the responses to the individual methods
-passed in the request.
+passed in the request.  For all of that interface, consult
+L<JMAP::Tester::Role::SentenceCollection>.
+
+A Response is also a L<JMAP::Tester::Role::HTTPResult>, meaning it has a
+C<http_response> method that returns an L<HTTP::Response> object.
 
 =cut
 

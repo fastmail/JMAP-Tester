@@ -12,8 +12,9 @@ use namespace::clean;
 
 =head1 OVERVIEW
 
-This is what you get when you upload!  It's got an C<is_success> method.  It
-returns true. It also has:
+A JMAP::Tester::Result::Upload object represents the successful upload of a
+JMAP blob.  It is a successful L<JMAP::Tester::Role::HTTPResult>, meaning it
+has a C<http_response> method that returns an L<HTTP::Response> object.
 
 =method blob_id
 
