@@ -935,7 +935,12 @@ to the L<HTTP::Response>.
 =cut
 
 sub http_request ($self, $http_request) {
-  my $future = $self->ua->request($self, $http_request, 'misc');
+  my $future = $self->ua->request($self, $http_request, 'misc')->then(sub {
+    my ($res) = @_;
+    $self->_logger->log_misc_response($self, { http_response => $res });
+    return Future->done($res);
+  });
+
   return $self->should_return_futures ? $future : $future->$Failsafe->get;
 }
 
