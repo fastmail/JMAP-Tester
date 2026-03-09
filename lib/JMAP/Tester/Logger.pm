@@ -52,6 +52,9 @@ sub write ($self, $string) {
 requires 'log_jmap_request';
 requires 'log_jmap_response';
 
+requires 'log_misc_request';
+requires 'log_misc_response';
+
 requires 'log_upload_request';
 requires 'log_upload_response';
 
