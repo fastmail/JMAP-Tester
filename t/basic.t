@@ -274,6 +274,84 @@ subtest "set sentence assert_no_errors" => sub {
   like($diags[1]->message, qr/notUpdated/, "...one about destroys");
 };
 
+subtest "abort diagnostics" => sub {
+  # We build a Response directly and call ->abort on it, inspecting the
+  # JMAP::Tester::Abort it throws.  The dumper names the type of whatever ref
+  # it's handed, so the diagnostics are exact and we can tell a value that was
+  # run through the dumper from one that wasn't. -- claude, 2026-06-17
+  my $dumper = sub { "<<" . ref($_[0]) . ">>" };
+
+  my $abort_diagnostics = sub {
+    my (@abort_args) = @_;
+
+    my $res = JMAP::Tester::Response->new({
+      diagnostic_dumper => $dumper,
+      items => [
+        [ atePies => { howMany => jnum(100) }, 'a' ],
+      ],
+    });
+
+    my $err = exception { $res->abort(@abort_args) };
+
+    Carp::confess("->abort did not throw")
+      unless blessed $err && $err->isa('JMAP::Tester::Abort');
+
+    return $err->diagnostics;
+  };
+
+  my $diag_case = sub {
+    my ($desc, $abort_args, $want) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    cmp_deeply($abort_diagnostics->(@$abort_args), $want, $desc);
+  };
+
+  $diag_case->(
+    "a ref-valued diagnostic is run through the diagnostic dumper",
+    [ "boom", [ Thing => { a => 1 } ] ],
+    [ "Thing: <<HASH>>\n" ],
+  );
+
+  $diag_case->(
+    "a label with no value becomes a bare diagnostic line",
+    [ "boom", [ "Just a label" ] ],
+    [ "Just a label\n" ],
+  );
+
+  $diag_case->(
+    "multiple diagnostics are dumped in order",
+    [ "boom", [ One => {}, "Two", Three => [] ] ],
+    [ "One: <<HASH>>\n", "Two\n", "Three: <<ARRAY>>\n" ],
+  );
+
+  $diag_case->(
+    "an explicit empty diag spec produces no diagnostics",
+    [ "boom", [] ],
+    undef,
+  );
+
+  $diag_case->(
+    "with no diag spec, a Response defaults to dumping its sentences",
+    [ "boom" ],
+    [ "Response sentences: <<ARRAY>>\n" ],
+  );
+};
+
+subtest "add_items aborts" => sub {
+  my $res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
+    items => [ [ atePies => {}, 'a' ] ],
+  });
+
+  my $err = exception { $res->add_items([ more => {}, 'b' ]) };
+
+  ok(
+    (blessed $err && $err->isa('JMAP::Tester::Abort')),
+    "add_items throws a proper abort",
+  ) or diag("got: $err");
+
+  like($err->message, qr/can't add items/, "...with the expected message");
+};
+
 subtest "calling as_set on non-set sentence" => sub {
   my $res = JMAP::Tester::Response->new({
     diagnostic_dumper => $DUMPER,
