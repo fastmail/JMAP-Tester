@@ -800,6 +800,55 @@ subtest "response_payload" => sub {
   }
 };
 
+subtest "Response methods on a Failure abort" => sub {
+  my $dumper = sub { "<<" . ref($_[0]) . ">>" };
+
+  my $aborts_with_dump = sub {
+    my ($method) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+    my $fail = JMAP::Tester::Result::Failure->new({
+      diagnostic_dumper => $dumper,
+      http_response => HTTP::Response->new(500, "Internal Server Error"),
+    });
+
+    my $err = exception { $fail->$method };
+
+    isa_ok($err, 'JMAP::Tester::Abort', "->$method on a Failure aborts")
+      or return;
+
+    is(
+      $err->message,
+      "tried to call Response method $method on a Failure",
+      "...with a message naming $method",
+    );
+
+    cmp_deeply(
+      $err->diagnostics,
+      [ "Result: <<JMAP::Tester::Result::Failure>>\n" ],
+      "...and a diagnostic dump of the Failure",
+    );
+  };
+
+  $aborts_with_dump->($_) for qw(
+    sentence
+    sentences
+    single_sentence
+    sentence_named
+    assert_n_sentences
+    paragraph
+    paragraphs
+    assert_n_paragraphs
+    paragraph_by_client_id
+    as_triples
+    as_stripped_triples
+    as_pairs
+    as_stripped_pairs
+
+    wrapper_properties
+  );
+};
+
 
 sub aborts_ok {
   my ($code, $want, $desc);
