@@ -84,7 +84,7 @@ method responses.
 
 sub as_set ($self) {
   unless ($self->name =~ m{/set$}) {
-    return $self->sentence_broker->abort(
+    return $self->sentence_broker->response->abort(
       sprintf(qq{tried to call ->as_set on sentence named "%s"}, $self->name)
     );
   }
@@ -113,7 +113,7 @@ sub assert_named ($self, $name) {
 
   return $self if $self->name eq $name;
 
-  $self->sentence_broker->abort(
+  $self->sentence_broker->response->abort(
     sprintf qq{expected sentence named "%s" but got "%s"}, $name, $self->name
   );
 }

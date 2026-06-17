@@ -7,6 +7,7 @@ use Moo::Role;
 
 use experimental 'signatures';
 
+use Data::OptList ();
 use JMAP::Tester::Abort ();
 
 use namespace::clean;
@@ -68,6 +69,50 @@ C<$name> may be omitted, in which case the sentence name is not checked.
 
 sub assert_single_successful_set ($self, $name = undef) {
   $self->assert_successful->single_sentence($name)->as_set->assert_no_errors;
+}
+
+has diagnostic_dumper => (
+  is => 'ro',
+  required => 1,
+);
+
+sub dump_diagnostic ($self, $value) {
+  $self->diagnostic_dumper->($value);
+}
+
+sub default_diagnostics ($self) {
+  return;
+}
+
+sub abort ($self, $string, $diag_spec = undef) {
+  $diag_spec //= $self->default_diagnostics;
+
+  my @diagnostics;
+
+  if ($diag_spec) {
+    my $todo = Data::OptList::mkopt($diag_spec);
+
+    PAIR: for my $pair (@$todo) {
+      my ($label, $value) = @$pair;
+
+      if (not defined $value) {
+        push @diagnostics, "$label\n";
+        next PAIR;
+      }
+
+      if (ref $value) {
+        $value = $self->dump_diagnostic($value);
+      }
+
+      push @diagnostics, "$label: $value";
+      $diagnostics[-1] .= "\n" unless $value =~ /\n\z/;
+    }
+  }
+
+  die JMAP::Tester::Abort->new({
+    message => $string,
+    (@diagnostics ? (diagnostics => \@diagnostics) : ()),
+  });
 }
 
 1;

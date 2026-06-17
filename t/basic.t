@@ -18,8 +18,11 @@ use Test::Abortable 'subtest';
 # require mocking up a remote end.  Until we're up for doing that, this is
 # simpler for testing. -- rjbs, 2016-12-15
 
+my $DUMPER = sub { "(@_)" };
+
 subtest "the basic basics" => sub {
   my $res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [ jstr('atePies'),
         { howMany => jnum(100), tastiestPieId => jstr(123) },
@@ -158,6 +161,7 @@ subtest "old style updated" => sub {
 
   for my $kind (sort keys %kinds) {
     my $res = JMAP::Tester::Response->new({
+      diagnostic_dumper => $DUMPER,
       items => [
         [ 'Piece/set' => { updated => $kinds{$kind} }, 'a' ]
       ],
@@ -183,18 +187,20 @@ subtest "basic abort" => sub {
   my $events = Test2::API::intercept(sub {
     subtest "this will abort" => sub {
       my $res = JMAP::Tester::Response->new({
+        diagnostic_dumper => $DUMPER,
         items => [
           [ atePies => { howMany => jnum(100), tastiestPieId => jstr(123) }, 'a' ],
         ],
       });
 
-      my $s = $res->single_sentence('piesEt');
+      $res->single_sentence('piesEt');
       pass("okay");
     };
   });
 
   my ($subtest) = grep { $_->isa('Test2::Event::Subtest') } @$events;
   my @pass = grep { $_->isa('Test2::Event::Ok') } @{ $subtest->subevents };
+
   is(@pass, 1, "aborted subtest emits just one ok");
   ok($pass[0]->causes_fail, "and it's a failure");
   isnt(
@@ -206,6 +212,7 @@ subtest "basic abort" => sub {
 
 subtest "set assert_named" => sub {
   my $res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [
         'Piece/set' => {
@@ -232,6 +239,7 @@ subtest "set sentence assert_no_errors" => sub {
   my $events = Test2::API::intercept(sub {
     subtest "this will abort" => sub {
       my $res = JMAP::Tester::Response->new({
+        diagnostic_dumper => $DUMPER,
         items => [
           [
             'Piece/set' => {
@@ -268,6 +276,7 @@ subtest "set sentence assert_no_errors" => sub {
 
 subtest "calling as_set on non-set sentence" => sub {
   my $res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [[
       error => {
         type => 'internal',
@@ -285,6 +294,7 @@ subtest "calling as_set on non-set sentence" => sub {
 
 subtest "miscellaneous error conditions on 1-paragraph 1-sentence response" => sub {
   my $res_1 = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [ welcome => { all => jstr('refugees') }, jstr('xyzzy') ],
     ],
@@ -311,6 +321,7 @@ subtest "miscellaneous error conditions on 1-paragraph 1-sentence response" => s
 
 subtest "miscellaneous errors on 2-paragraph 2-sentence response" => sub {
   my $res_2 = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [ welcome => { all  => jstr('refugees') }, jstr('xyzzy') ],
       [ goodBye => { blue => jstr('skye') }, jstr('a') ],
@@ -362,6 +373,7 @@ subtest "miscellaneous errors on 2-paragraph 2-sentence response" => sub {
 
 subtest "miscellaneous errors on 1-paragraph 2-sentence response" => sub {
   my $res_3 = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [ welcome => { all => jstr('refugees') }, jstr('xyzzy') ],
       [ welcome => { all => jstr('homeless') }, jstr('xyzzy') ],
@@ -412,6 +424,7 @@ subtest "construction errors" => sub {
   {
     my $error = exception {
       my $res_helper  = JMAP::Tester::Response->new({
+        diagnostic_dumper => $DUMPER,
         items => [
           [ welcome => { all => jstr('refugees') }, jstr('c1') ],
           [ welcome => { all => jstr('homeless') }, jstr('c2') ],
@@ -507,6 +520,7 @@ subtest "with optional typist" => sub {
 
 subtest "test accessors on Sentence::Set" => sub {
   my $res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [
         'Widget/set' => {
@@ -587,6 +601,7 @@ subtest "test accessors on Sentence::Set with omitted arguments" => sub {
   # When the set response has none of the standard fields at all, we should
   # still be okay. -- claude, 2025-02-08
   my $res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [ 'Thing/set' => { newState => 'state-3' }, 'a' ],
     ],
@@ -608,6 +623,7 @@ subtest "test accessors on Sentence::Set with omitted arguments" => sub {
 
 subtest "assert_no_errors" => sub {
   my $res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [ 'Widget/set' => {
           created   => { cr0 => { id => 'x100' } },
@@ -623,6 +639,7 @@ subtest "assert_no_errors" => sub {
 
 subtest "assert_successful and friends" => sub {
   my $ok_res = JMAP::Tester::Response->new({
+    diagnostic_dumper => $DUMPER,
     items => [
       [ 'Widget/set' => {
           created   => { cr0 => { id => 'x1' } },
@@ -652,6 +669,7 @@ subtest "assert_successful and friends" => sub {
   # Now for the failure cases.
   {
     my $fail = JMAP::Tester::Result::Failure->new({
+      diagnostic_dumper => $DUMPER,
       http_response => HTTP::Response->new(500, "Internal Server Error"),
     });
 
@@ -664,6 +682,7 @@ subtest "assert_successful and friends" => sub {
 
   {
     my $fail = JMAP::Tester::Result::Failure->new({
+      diagnostic_dumper => $DUMPER,
       ident         => "custom error ident",
       http_response => HTTP::Response->new(500, "Internal Server Error"),
     });
@@ -680,6 +699,7 @@ subtest "assert_successful and friends" => sub {
 subtest "response_payload" => sub {
   {
     my $fail = JMAP::Tester::Result::Failure->new({
+      diagnostic_dumper => $DUMPER,
       http_response => HTTP::Response->new(
         500, "Oops",
         [ 'Content-Type' => 'text/plain' ],
@@ -695,7 +715,9 @@ subtest "response_payload" => sub {
   }
 
   {
-    my $fail = JMAP::Tester::Result::Failure->new;
+    my $fail = JMAP::Tester::Result::Failure->new({
+      diagnostic_dumper => $DUMPER,
+    });
     is($fail->response_payload, '', "no http_response means empty payload");
   }
 };

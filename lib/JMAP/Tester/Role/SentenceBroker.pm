@@ -9,6 +9,4 @@ requires 'paragraph_for_items';
 
 requires 'strip_json_types';
 
-requires 'abort';
-
 1;

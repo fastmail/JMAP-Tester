@@ -63,27 +63,11 @@ has wrapper_properties => (
 sub items ($self) { @{ $self->_items } }
 
 sub add_items ($self, @) {
-  $self->sentence_broker->abort("can't add items to " . __PACKAGE__);
+  $self->abort("can't add items to " . __PACKAGE__);
 }
 
-sub default_diagnostic_dumper {
-  state $default = do {
-    require JSON::MaybeXS;
-    state $json = JSON::MaybeXS->new->utf8->convert_blessed->pretty->canonical;
-    sub ($value) { $json->encode($value); }
-  };
-
-  return $default;
-}
-
-has _diagnostic_dumper => (
-  is => 'ro',
-  builder   => 'default_diagnostic_dumper',
-  init_arg  => 'diagnostic_dumper',
-);
-
-sub dump_diagnostic ($self, $value) {
-  $self->_diagnostic_dumper->($value);
+sub default_diagnostics ($self) {
+  return [ 'Response sentences', [ $self->sentences ] ];
 }
 
 1;
