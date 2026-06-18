@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.110     2026-06-17 20:59:46-04:00 America/New_York
         - provide all Result types with the option to issue a diagnostic abort,
           previously limited to Response
         - when a Failure is treated like a Response (more or less), issue a
