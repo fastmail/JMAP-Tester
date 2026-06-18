@@ -14,8 +14,6 @@ BEGIN {
     paragraph_for_items
 
     strip_json_types
-
-    abort
   )) {
     my $sub = sub ($self, @rest) {
       $self->sentence_broker->$m(@rest);

@@ -158,7 +158,7 @@ sub assert_no_errors ($self) {
 
   return $self unless @errors;
 
-  $self->sentence_broker->abort(
+  $self->sentence_broker->response->abort(
     "errors found in " . $self->name . " sentence",
     \@errors,
   );
