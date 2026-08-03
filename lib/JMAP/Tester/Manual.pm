@@ -53,8 +53,11 @@ of the session.
 There are a few methods for dealing with the session:
 
 =for :list
-* C<< L<JMAP::Tester/get_client_session> >>, an async method that fetches and returns the session object; on success, it returns an Auth object
-* C<< L<JMAP::Tester/update_client_session> >>, an async method that gets the client session, uses it to reconfigure the tester (if necessary), and returns the Auth object
+* C<< L<JMAP::Tester/get_client_session> >>, an async method that fetches and
+  returns the session object; on success, it returns an Auth object
+* C<< L<JMAP::Tester/update_client_session> >>, an async method that gets the
+  client session, uses it to reconfigure the tester (if necessary), and returns
+  the Auth object
 
 =head2 API requests
 
@@ -89,11 +92,19 @@ by name.
 Here are the most important methods on a Response:
 
 =for :list
-* C<sentence($n)> returns the I<n>th sentence in the response (or dies if out of bounds)
-* C<sentence_named($name)> returns the sentence with this name (or dies if there isn't exactly one with that name)
-* C<single_sentence($name)> dies unless there is exactly one sentence in the response; if C<$name> is given, the method dies unless the sentence has that name; if it doesn't die, it returns that sentence.
-* C<as_pairs> and C<as_triples> return arrayrefs where each element is a 2- or 3-element arrayref of the name, arguments, and (maybe) client id of each sentence -- in other words, a plain structure representing the method response
-* C<as_stripped_pairs> and C<as_stripped_triples> return the same, but with L<JSON::Typist> data tripped from the arguments
+* C<sentence($n)> returns the I<n>th sentence in the response (or dies if out
+  of bounds)
+* C<sentence_named($name)> returns the sentence with this name (or dies if
+  there isn't exactly one with that name)
+* C<single_sentence($name)> dies unless there is exactly one sentence in the
+  response; if C<$name> is given, the method dies unless the sentence has that
+  name; if it doesn't die, it returns that sentence.
+* C<as_pairs> and C<as_triples> return arrayrefs where each element is a 2- or
+  3-element arrayref of the name, arguments, and (maybe) client id of each
+  sentence -- in other words, a plain structure representing the method
+  response
+* C<as_stripped_pairs> and C<as_stripped_triples> return the same, but with
+  L<JSON::Typist> data tripped from the arguments
 
 L<Sentence|JMAP::Tester::Response::Sentence> objects have these useful methods:
 
@@ -101,30 +112,43 @@ L<Sentence|JMAP::Tester::Response::Sentence> objects have these useful methods:
 * C<name> returns the sentence name
 * C<arguments> returns the sentence arguments
 * C<client_id> returns the method call id
-* C<as_pair>, C<as_triple>, C<as_stripped_pair>, and C<as_stripped_triple> behave like the similarly-named methods on a Response, but just return the arrayref representing this sentence
+* C<as_pair>, C<as_triple>, C<as_stripped_pair>, and C<as_stripped_triple>
+  behave like the similarly-named methods on a Response, but just return the
+  arrayref representing this sentence
 * C<as_set> returns a new L<Set|JMAP::Tester::Response::Sentence::Set> object,
-with extra methods for testing the response to C</set>-style methods
+  with extra methods for testing the response to C</set>-style methods
 
 A "Set" sentence has all the methods of a normal sentence as well as:
 
 =for :list
 * C<new_state> and C<old_state>: return the new and old state
 * C<created>: returns the C<created> argument, or an empty hashref if null
-* C<created_id($creation_id)>: returns the C<id> for the object created for that creation id
+* C<created_id($creation_id)>: returns the C<id> for the object created for
+  that creation id
 * C<updated>: returns the C<updated> argument, or an empty hashref if null
-* C<created_ids>, C<updated_ids>, C<destroyed_ids>: return the ids of objects created, updated, or destroyed
-* C<create_errors>, C<update_errors>, C<destroy_errors>: return the errors with their respective operations, or an empty hashref if none
-* C<not_created_ids>, C<not_updated_ids>, C<not_destroyed_ids>: return the ids of objects not created, not updated, or not destroyed; in other words, the keys of the hashrefs returned by the error methods above
+* C<created_ids>, C<updated_ids>, C<destroyed_ids>: return the ids of objects
+  created, updated, or destroyed
+* C<create_errors>, C<update_errors>, C<destroy_errors>: return the errors with
+  their respective operations, or an empty hashref if none
+* C<not_created_ids>, C<not_updated_ids>, C<not_destroyed_ids>: return the ids
+  of objects not created, not updated, or not destroyed; in other words, the
+  keys of the hashrefs returned by the error methods above
 
 There are also a few useful assertion-making methods to know.  These will throw
 aborts (L<see below|/Diagnostics and logging>) if the condition they assert
 doesn't hold true:
 
 =for :list
-* C<< $result->assert_successful >>: the result must be a success (C<is_success> is true)
-* C<< $result->assert_successful_set($name) >>: the result must be an API request result with a sentence named C<$name>, which must be a C</set> method, and it must be reporting zero errors (like C<notCreated> etc.)
-* C<< $result->assert_single_successful_set($name) >>: just like the above, but there must be only one sentence in the response; C<$name> can be omitted to allow any C</set>
-* C<< $set->assert_no_errors >>: on a Set sentence, this asserts that there were no errors in any of its operations
+* C<< $result->assert_successful >>: the result must be a success
+  (C<is_success> is true)
+* C<< $result->assert_successful_set($name) >>: the result must be an API
+  request result with a sentence named C<$name>, which must be a C</set>
+  method, and it must be reporting zero errors (like C<notCreated> etc.)
+* C<< $result->assert_single_successful_set($name) >>: just like the above, but
+  there must be only one sentence in the response; C<$name> can be omitted to
+  allow any C</set>
+* C<< $set->assert_no_errors >>: on a Set sentence, this asserts that there
+  were no errors in any of its operations
 
 =head2 Uploads and downloads
 
