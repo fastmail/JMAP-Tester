@@ -2,6 +2,9 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.112     2026-08-03 13:04:57-04:00 America/New_York
+        - tweak formatting of bullet lists in Manual
+
 0.111     2026-08-03 12:10:36-04:00 America/New_York
         - add JMAP::Tester::Manual, a sort of quick start
 
