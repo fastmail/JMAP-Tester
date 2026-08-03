@@ -114,7 +114,7 @@ L<Sentence|JMAP::Tester::Response::Sentence> objects have these useful methods:
 * C<as_pair>, C<as_triple>, C<as_stripped_pair>, and C<as_stripped_triple>
 behave like the similarly-named methods on a Response, but just return the
 arrayref representing this sentence
-* C<as_set> returns a new LL<Set|JMAP::Tester::Response::Sentence::Set> object,
+* C<as_set> returns a new L<Set|JMAP::Tester::Response::Sentence::Set> object,
 with extra methods for testing the response to C</set>-style methods
 
 A "Set" sentence has all the methods of a normal sentence as well as:
@@ -164,7 +164,7 @@ must contain:
   blob      - the data to upload. Must be a reference to a string
 
 C<download> takes as its argument a hashref of download properties and on
-success returns an L<Download|JMAP::Tester::Result::Download> object.  The
+success returns a L<Download|JMAP::Tester::Result::Download> object.  The
 argument hashref must contain:
 
   blobId    - the blob to download (no default)
@@ -175,7 +175,7 @@ argument hashref must contain:
 =head2 Other HTTP requests
 
 Sometimes, you may need to make a custom HTTP request with the same underlying
-user agent as your tester users.  This might be to interact with a custom
+user agent as your tester uses.  This might be to interact with a custom
 authentication mechanism, to access custom endpoints, or just to make very,
 very specifically crafted requests.  For this reason, C<http_request> exists.
 It's an async method that takes an L<HTTP::Request> object as its argument and
