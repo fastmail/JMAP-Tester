@@ -64,7 +64,7 @@ the Auth object
 The most common thing you'll do with a tester is probably make API requests.
 Those are the ones defined in L<RFC 8620
 §3.1|https://datatracker.ietf.org/doc/html/rfc8620#section-3.1> -- the ones
-with C<methodCalls>, where you do most of the work of JMAP.  
+with C<methodCalls>, where you do most of the work of JMAP.
 
 You call it like this:
 
@@ -117,6 +117,38 @@ arrayref representing this sentence
 * C<as_set> returns a new LL<Set|JMAP::Tester::Response::Sentence::Set> object,
 with extra methods for testing the response to C</set>-style methods
 
+A "Set" sentence has all the methods of a normal sentence as well as:
+
+=for :list
+* C<new_state> and C<old_state>: return the new and old state
+* C<created>: returns the C<created> argument, or an empty hashref if null
+* C<created_id($creation_id)>: returns the C<id> for the object created for
+that creation id
+* C<updated>: returns the C<updated> argument, or an empty hashref if null
+* C<created_ids>, C<updated_ids>, C<destroyed_ids>: return the ids of objects
+created, updated, or destroyed
+* C<create_errors>, C<update_errors>, C<destroy_errors>: return the errors with
+their respective operations, or an empty hashref if none
+* C<not_created_ids>, C<not_updated_ids>, C<not_destroyed_ids>: return the ids
+of objects not created, not updated, or not destroyed; in other words, the keys
+of the hashrefs returned by the error methods above
+
+There are also a few useful assertion-making methods to know.  These will throw
+aborts (L<see below|/Diagnostics and logging>) if the condition they assert
+doesn't hold true:
+
+=for :list
+* C<< $result->assert_successful >>: the result must be a success
+(C<is_success> is true)
+* C<< $result->assert_successful_set($name) >>: the result must be an API
+request result with a sentence named C<$name>, which must be a C</set> method,
+and it must be reporting zero errors (like C<notCreated> etc.)
+* C<< $result->assert_single_successful_set($name) >>: just like the above, but
+there must be only one sentence in the response; C<$name> can be omitted to
+allow any C</set>
+* C<< $set->assert_no_errors >>: on a Set sentence, this asserts that there
+were no errors in any of its operations
+
 =head2 Uploads and downloads
 
 Testing blobs might require that you perform JMAP upload or download requests.
@@ -152,10 +184,10 @@ default headers you may have set up for auth will be applied!
 
 =head2 Diagnostics and logging
 
-Many of JMAP::Tester's failures are L<Test::Abortable> exceptions that can
-terminate subtests without terminating the whole test program.  They provide
-useful diagnostics on failure, so learning and using the JMAP::Tester methods
-that die on unexpected results can save you time later.
+Many of JMAP::Tester's failures are L<Test::Abortable> exceptions ("aborts")
+that can terminate subtests without terminating the whole test program.  They
+provide useful diagnostics on failure, so learning and using the JMAP::Tester
+methods that die on unexpected results can save you time later.
 
 Further, JMAP::Tester has a generic request logging system.  It's subject to
 significant change, but the important thing to know is that if you set the
