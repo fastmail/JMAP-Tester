@@ -28,7 +28,7 @@ L<HTTPResult|JMAP::Tester::Role::HTTPResult> role, which has just a few
 important methods:
 
 =for :list
-* C<is_success>, which returns true for a successful result and false otherwise
+* C<is_success>, which returns true for a successful HTTP response and false otherwise
 * C<http_response>, which returns the L<HTTP::Response> object for the result
 * C<response_payload>, which returns the HTTP response as a string
 
@@ -57,7 +57,7 @@ There are a few methods for dealing with the session:
 returns the session object; on success, it returns an Auth object
 * C<< L<JMAP::Tester/update_client_session> >>, an async method that gets the
 client session, uses it to reconfigure the tester (if necessary), and returns
-the 
+the Auth object
 
 =head2 API requests
 
@@ -102,7 +102,7 @@ name; if it doesn't die, it returns that sentence.
 * C<as_pairs> and C<as_triples> return arrayrefs where each element is a 2- or
 3-element arrayref of the name, arguments, and (maybe) client id of each
 sentence -- in other words, a plain structure representing the method response
-* C<as_stripped_pairs> and C<as_stripped_striples> return the same, but with
+* C<as_stripped_pairs> and C<as_stripped_triples> return the same, but with
 L<JSON::Typist> data tripped from the arguments
 
 L<Sentence|JMAP::Tester::Response::Sentence> objects have these useful methods:
@@ -111,10 +111,10 @@ L<Sentence|JMAP::Tester::Response::Sentence> objects have these useful methods:
 * C<name> returns the sentence name
 * C<arguments> returns the sentence arguments
 * C<client_id> returns the method call id
-* C<as_pair>, C<as_triple>, C<as_stripped_pair>, and C<as_stripped_striple>
+* C<as_pair>, C<as_triple>, C<as_stripped_pair>, and C<as_stripped_triple>
 behave like the similarly-named methods on a Response, but just return the
 arrayref representing this sentence
-* C<as_set> returns a new <Set|JMAP::Tester::Response::Sentence::Set> object,
+* C<as_set> returns a new LL<Set|JMAP::Tester::Response::Sentence::Set> object,
 with extra methods for testing the response to C</set>-style methods
 
 =head2 Uploads and downloads
@@ -124,16 +124,16 @@ For these, the C<< L<JMAP::Tester/upload> >> and C<< L<JMAP::Tester/download>
 >> methods exist.
 
 C<upload> takes as its argument a hashref of upload properties and on success
-returns an L<Upload|JMAP::Tester::Upload> object.  The argument hashref must
-contain:
+returns an L<Upload|JMAP::Tester::Result::Upload> object.  The argument hashref
+must contain:
 
   accountId - the account for which we're uploading (no default)
   type      - the content-type we want to provide to the server
   blob      - the data to upload. Must be a reference to a string
 
 C<download> takes as its argument a hashref of download properties and on
-success returns an L<Download|JMAP::Tester::Download> object.  The argument
-hashref must contain:
+success returns an L<Download|JMAP::Tester::Result::Download> object.  The
+argument hashref must contain:
 
   blobId    - the blob to download (no default)
   accountId - the account for which we're downloading (no default)
@@ -142,13 +142,13 @@ hashref must contain:
 
 =head2 Other HTTP requests
 
-Sometimes, you may need to make an HTTP request with your existing web
-connection.  This might be to interact with a custom authentication mechanism,
-to access custom endpoints, or just to make very, very specifically crafted
-requests.  For this reasons, C<http_request> exists.  It's an async method that
-takes an L<HTTP::Request> object as its argument and returns an
-L<HTTP::Response>.  Remember when you make this call that the default headers
-you may have set up for auth will be applied!
+Sometimes, you may need to make a custom HTTP request with the same underlying
+user agent as your tester users.  This might be to interact with a custom
+authentication mechanism, to access custom endpoints, or just to make very,
+very specifically crafted requests.  For this reason, C<http_request> exists.
+It's an async method that takes an L<HTTP::Request> object as its argument and
+returns an L<HTTP::Response>.  Remember when you make this call that the
+default headers you may have set up for auth will be applied!
 
 =head2 Diagnostics and logging
 
