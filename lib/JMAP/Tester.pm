@@ -917,6 +917,7 @@ sub logout ($self) {
       return Future->done(
         JMAP::Tester::Result::Logout->new({
           http_response => $res,
+          diagnostic_dumper => $self->default_diagnostic_dumper,
         })
       );
     }
